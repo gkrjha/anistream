@@ -17,12 +17,60 @@ interface Props {
   totalSeasons?: number;
 }
 
-const SERIES_EP_DURATION = 2700; // 45 min
+type ServerKey = 'vidnest' | 'vidsrc' | 'vidsrcme' | 'autoembed' | 'embed2';
+
+interface ServerOption {
+  key: ServerKey;
+  label: string;
+  hint: string;
+  movieUrl: (id: number) => string;
+  tvUrl: (id: number, s: number, e: number) => string;
+}
+
+const SERVERS: ServerOption[] = [
+  {
+    key: 'vidnest',
+    label: 'Server 1',
+    hint: 'Multi-audio',
+    movieUrl: (id) => `https://vidnest.fun/movie/${id}`,
+    tvUrl: (id, s, e) => `https://vidnest.fun/tv/${id}/${s}/${e}`,
+  },
+  {
+    key: 'vidsrc',
+    label: 'Server 2',
+    hint: 'Hindi/Multi',
+    movieUrl: (id) => `https://vidsrc.xyz/embed/movie/${id}`,
+    tvUrl: (id, s, e) => `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}`,
+  },
+  {
+    key: 'vidsrcme',
+    label: 'Server 3',
+    hint: 'Alt audio',
+    movieUrl: (id) => `https://vidsrc.me/embed/movie?tmdb=${id}`,
+    tvUrl: (id, s, e) => `https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}`,
+  },
+  {
+    key: 'autoembed',
+    label: 'Server 4',
+    hint: 'Backup',
+    movieUrl: (id) => `https://autoembed.co/movie/tmdb/${id}`,
+    tvUrl: (id, s, e) => `https://autoembed.co/tv/tmdb/${id}-${s}-${e}`,
+  },
+  {
+    key: 'embed2',
+    label: 'Server 5',
+    hint: 'Backup 2',
+    movieUrl: (id) => `https://www.2embed.cc/embed/${id}`,
+    tvUrl: (id, s, e) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`,
+  },
+];
+
+const SERIES_EP_DURATION = 2700;
 const NEXT_TRIGGER_AT = SERIES_EP_DURATION - 90;
 const NEXT_COUNTDOWN = 10;
 
 export default function WatchPlayer({
-  title, image, embedUrl, type, tmdbId, synopsis, rating, year, genres, totalSeasons = 1,
+  title, image, embedUrl: _embedUrl, type, tmdbId, synopsis, rating, year, genres, totalSeasons = 1,
 }: Props) {
   const searchParams = useSearchParams();
   const resumeSeason = Number(searchParams.get('season') ?? 1) || 1;
@@ -30,6 +78,7 @@ export default function WatchPlayer({
 
   const [season, setSeason] = useState(resumeSeason);
   const [episode, setEpisode] = useState(resumeEp);
+  const [server, setServer] = useState<ServerKey>('vidnest');
   const [autoNext, setAutoNext] = useState(true);
   const [showNextCard, setShowNextCard] = useState(false);
   const [countdown, setCountdown] = useState(NEXT_COUNTDOWN);
@@ -38,9 +87,10 @@ export default function WatchPlayer({
   const wallRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wallTime = useRef(0);
 
+  const activeServer = SERVERS.find((s) => s.key === server) ?? SERVERS[0];
   const currentEmbed = type === 'series'
-    ? `https://vidnest.fun/tv/${tmdbId}/${season}/${episode}`
-    : embedUrl;
+    ? activeServer.tvUrl(tmdbId, season, episode)
+    : activeServer.movieUrl(tmdbId);
 
   const stopCountdown = useCallback(() => {
     if (countdownRef.current) { clearInterval(countdownRef.current); countdownRef.current = null; }
@@ -75,7 +125,6 @@ export default function WatchPlayer({
     }
   }
 
-  // postMessage listener for real ended events
   useEffect(() => {
     function handleMessage(e: MessageEvent) {
       try {
@@ -103,7 +152,6 @@ export default function WatchPlayer({
   useEffect(() => { if (!autoNext) { stopWall(); setShowNextCard(false); stopCountdown(); } }, [autoNext, stopWall, stopCountdown]);
   useEffect(() => () => { stopCountdown(); stopWall(); }, [stopCountdown, stopWall]);
 
-  // Save watch progress
   useEffect(() => {
     saveProgress({
       id: `${type}-${tmdbId}`,
@@ -142,8 +190,25 @@ export default function WatchPlayer({
         )}
       </div>
 
+      {/* Server selector */}
+      <div className="max-w-6xl mx-auto px-4 pt-3 pb-1 flex items-center gap-2 flex-wrap">
+        <span className="text-gray-600 text-xs font-medium">Server:</span>
+        {SERVERS.map((s) => (
+          <button key={s.key} onClick={() => setServer(s.key)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border
+              ${server === s.key
+                ? 'bg-red-600 border-red-500 text-white shadow-[0_0_10px_rgba(229,9,20,0.3)]'
+                : 'bg-white/5 border-white/8 text-gray-400 hover:text-white hover:bg-white/10'}`}>
+            {s.label}
+            <span className={`text-[10px] font-normal ${server === s.key ? 'text-red-200' : 'text-gray-600'}`}>
+              {s.hint}
+            </span>
+          </button>
+        ))}
+      </div>
+
       {/* Player */}
-      <div className="w-full bg-black">
+      <div className="w-full bg-black mt-2">
         <div className="relative w-full max-w-6xl mx-auto" style={{ aspectRatio: '16/9' }}>
           <iframe key={currentEmbed} src={currentEmbed}
             className="absolute inset-0 w-full h-full"
@@ -214,7 +279,7 @@ export default function WatchPlayer({
         </div>
       )}
 
-      {/* Info + Episodes */}
+      {/* Info */}
       <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-4">
           <h1 className="text-2xl sm:text-3xl font-black leading-tight">{title}</h1>
