@@ -6,7 +6,8 @@ export async function GET(req: NextRequest) {
   const page = Number(searchParams.get('page') || 1);
   const genre = searchParams.get('genre') || '';
   const sort = searchParams.get('sort') || 'popularity.desc';
+  const language = searchParams.get('language') || '';
 
-  const data = await getSeries(page, genre, sort);
+  const data = await getSeries(page, genre, sort, language);
   return NextResponse.json(data);
 }

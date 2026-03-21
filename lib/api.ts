@@ -221,11 +221,12 @@ export async function getPopularMovies(page = 1) {
   , 3600);
 }
 
-export async function getMovies(page = 1, genre = '', sort = 'popularity.desc') {
-  const key = `movies_${page}_${genre}_${sort}`;
+export async function getMovies(page = 1, genre = '', sort = 'popularity.desc', language = '') {
+  const key = `movies_${page}_${genre}_${sort}_${language}`;
   return cached(key, async () => {
     let url = `/discover/movie?page=${page}&sort_by=${sort}`;
     if (genre) url += `&with_genres=${genre}`;
+    if (language) url += `&with_original_language=${language}`;
     const d = await tmdb<{ results: TMDBMovie[]; total_pages: number }>(url);
     return { items: d?.results?.map(parseMovie) ?? [], totalPages: d?.total_pages ?? 1 };
   }, 3600);
@@ -245,11 +246,12 @@ export async function getPopularSeries(page = 1) {
   , 3600);
 }
 
-export async function getSeries(page = 1, genre = '', sort = 'popularity.desc') {
-  const key = `series_${page}_${genre}_${sort}`;
+export async function getSeries(page = 1, genre = '', sort = 'popularity.desc', language = '') {
+  const key = `series_${page}_${genre}_${sort}_${language}`;
   return cached(key, async () => {
     let url = `/discover/tv?page=${page}&sort_by=${sort}`;
     if (genre) url += `&with_genres=${genre}`;
+    if (language) url += `&with_original_language=${language}`;
     const d = await tmdb<{ results: TMDBSeries[]; total_pages: number }>(url);
     return { items: d?.results?.map(parseSeries) ?? [], totalPages: d?.total_pages ?? 1 };
   }, 3600);

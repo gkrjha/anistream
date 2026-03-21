@@ -17,6 +17,18 @@ const SORTS = [
   { value: 'release_date.desc', label: 'Latest' },
   { value: 'revenue.desc', label: 'Box Office' },
 ];
+const LANGUAGES = [
+  { value: '', label: 'All Languages' },
+  { value: 'hi', label: '🇮🇳 Hindi' },
+  { value: 'en', label: '🇺🇸 English' },
+  { value: 'ko', label: '🇰🇷 Korean' },
+  { value: 'ja', label: '🇯🇵 Japanese' },
+  { value: 'zh', label: '🇨🇳 Chinese' },
+  { value: 'es', label: '🇪🇸 Spanish' },
+  { value: 'fr', label: '🇫🇷 French' },
+  { value: 'ta', label: '🇮🇳 Tamil' },
+  { value: 'te', label: '🇮🇳 Telugu' },
+];
 
 export default function MoviesPageClient() {
   const [items, setItems] = useState<MediaItem[]>([]);
@@ -25,17 +37,19 @@ export default function MoviesPageClient() {
   const [totalPages, setTotalPages] = useState(1);
   const [genre, setGenre] = useState('');
   const [sort, setSort] = useState('popularity.desc');
+  const [language, setLanguage] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), sort });
     if (genre) params.set('genre', genre);
+    if (language) params.set('language', language);
     const res = await fetch(`/api/movies?${params}`);
     const data = await res.json();
     setItems(data.items ?? []);
     setTotalPages(data.totalPages ?? 1);
     setLoading(false);
-  }, [page, genre, sort]);
+  }, [page, genre, sort, language]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -48,6 +62,7 @@ export default function MoviesPageClient() {
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <h1 className="text-3xl font-black text-white">🎬 Movies</h1>
         <div className="flex gap-3 flex-wrap">
+          <Select options={LANGUAGES} value={language} onChange={(v) => applyFilter(setLanguage, v)} />
           <Select options={GENRES} value={genre} onChange={(v) => applyFilter(setGenre, v)} />
           <Select options={SORTS} value={sort} onChange={(v) => applyFilter(setSort, v)} />
         </div>
