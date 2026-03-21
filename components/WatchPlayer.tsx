@@ -85,7 +85,8 @@ export default function WatchPlayer({
 
   const [season, setSeason] = useState(resumeSeason);
   const [episode, setEpisode] = useState(resumeEp);
-  const [server, setServer] = useState<ServerKey>('vidnest');
+  const [server, setServer] = useState<ServerKey>('multiembed');
+  const [iframeKey, setIframeKey] = useState(0);
   const [autoNext, setAutoNext] = useState(true);
   const [showNextCard, setShowNextCard] = useState(false);
   const [countdown, setCountdown] = useState(NEXT_COUNTDOWN);
@@ -221,10 +222,21 @@ export default function WatchPlayer({
       {/* Player */}
       <div className="w-full bg-black mt-2">
         <div className="relative w-full max-w-6xl mx-auto" style={{ aspectRatio: '16/9' }}>
-          <iframe key={currentEmbed} src={currentEmbed}
+          <iframe key={`${iframeKey}-${currentEmbed}`} src={currentEmbed}
             className="absolute inset-0 w-full h-full"
             allowFullScreen allow="autoplay; fullscreen; picture-in-picture"
+            sandbox="allow-scripts allow-same-origin allow-fullscreen allow-forms allow-presentation"
             referrerPolicy="origin" onLoad={onIframeLoad} />
+
+          {/* Retry button */}
+          <button
+            onClick={() => setIframeKey((k) => k + 1)}
+            className="absolute top-3 right-3 z-20 flex items-center gap-1.5
+              bg-black/70 hover:bg-red-600 border border-white/10 hover:border-red-500
+              text-white text-xs font-bold px-3 py-1.5 rounded-lg
+              transition-all backdrop-blur-sm opacity-40 hover:opacity-100">
+            ↺ Retry
+          </button>
 
           {/* Auto Next card */}
           {showNextCard && type === 'series' && (

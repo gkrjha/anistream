@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter as useNextRouter, usePathname } from 'next/navigation';
 import { saveProgress } from '@/lib/history';
 import { Play, ChevronLeft, ChevronRight, Star, ArrowLeft, SkipForward, Tv2 } from 'lucide-react';
 
@@ -56,11 +56,14 @@ export default function AnimeWatchPlayer({
 }: Props) {
   const epCount = Math.max(totalEpisodes || 1, 1);
   const searchParams = useSearchParams();
+  const nextRouter = useNextRouter();
+  const pathname = usePathname();
 
   // Resume from URL params (?ep=5&lang=dub)
   const resumeEp = Number(searchParams.get('ep') ?? 1) || 1;
   const resumeLang = (searchParams.get('lang') === 'dub' ? 'dub' : 'sub') as 'sub' | 'dub';
 
+  const [iframeKey, setIframeKey] = useState(0); // increment to force reload
   const [visibleEps, setVisibleEps] = useState(Math.min(Math.max(resumeEp + 20, 100), epCount));
   const [episode, setEpisode] = useState(Math.min(resumeEp, epCount));
   const [lang, setLang] = useState<'sub' | 'dub'>(resumeLang);
@@ -71,7 +74,14 @@ export default function AnimeWatchPlayer({
   const [epTitles, setEpTitles] = useState<Record<number, string>>({});
   const [titlesLoading, setTitlesLoading] = useState(false);
 
-  // Fetch episode titles from Jikan using MAL ID
+  // Sync episode + lang into URL so refresh restores position
+  useEffect(() => {
+    const params = new URLSearchParams();
+    params.set('ep', String(episode));
+    params.set('lang', lang);
+    nextRouter.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [episode, lang]);
   useEffect(() => {
     if (!malId) return;
     setTitlesLoading(true);
@@ -226,15 +236,27 @@ export default function AnimeWatchPlayer({
           <div className="w-full bg-black xl:rounded-xl overflow-hidden">
             <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
               {embedUrl ? (
-                <iframe
-                  key={`${server}-${anilistId}-${episode}-${lang}`}
-                  src={embedUrl}
-                  className="absolute inset-0 w-full h-full"
-                  allowFullScreen
-                  allow="autoplay; fullscreen; picture-in-picture"
-                  referrerPolicy="origin"
-                  onLoad={onIframeLoad}
-                />
+                <>
+                  <iframe
+                    key={`${iframeKey}-${server}-${anilistId}-${episode}-${lang}`}
+                    src={embedUrl}
+                    className="absolute inset-0 w-full h-full"
+                    allowFullScreen
+                    allow="autoplay; fullscreen; picture-in-picture"
+                    sandbox="allow-scripts allow-same-origin allow-fullscreen allow-forms allow-presentation"
+                    referrerPolicy="origin"
+                    onLoad={onIframeLoad}
+                  />
+                  {/* Retry button — top-right corner */}
+                  <button
+                    onClick={() => setIframeKey((k) => k + 1)}
+                    className="absolute top-3 right-3 z-20 flex items-center gap-1.5
+                      bg-black/70 hover:bg-red-600 border border-white/10 hover:border-red-500
+                      text-white text-xs font-bold px-3 py-1.5 rounded-lg
+                      transition-all backdrop-blur-sm opacity-40 hover:opacity-100">
+                    ↺ Retry
+                  </button>
+                </>
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0e0e1a] gap-4">
                   <Play size={40} className="text-gray-600" />
