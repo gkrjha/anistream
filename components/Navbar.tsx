@@ -73,7 +73,7 @@ export default function Navbar() {
         </div>
 
         {/* Search — desktop */}
-        <form onSubmit={handleSearch} className="ml-auto hidden sm:flex items-center">
+        <form onSubmit={handleSearch} className="ml-auto hidden md:flex items-center">
           <div className="relative flex items-center">
             <div className={`flex items-center bg-white/[0.07] border rounded-xl overflow-hidden
               transition-all duration-300 ${searchOpen ? 'border-red-500/60 w-64' : 'border-white/10 w-10 hover:w-48 hover:border-white/20'}`}
@@ -99,9 +99,16 @@ export default function Navbar() {
           </div>
         </form>
 
+        {/* Mobile search icon */}
+        <button onClick={() => { setSearchOpen((v) => !v); setMobileOpen(false); }}
+          className="md:hidden ml-auto w-10 h-10 flex items-center justify-center
+            text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-white/5">
+          <span className="text-lg">🔍</span>
+        </button>
+
         {/* Mobile toggle */}
-        <button onClick={() => setMobileOpen((v) => !v)}
-          className="md:hidden ml-auto w-10 h-10 flex flex-col items-center justify-center gap-1.5
+        <button onClick={() => { setMobileOpen((v) => !v); setSearchOpen(false); }}
+          className="md:hidden w-10 h-10 flex flex-col items-center justify-center gap-1.5
             text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-white/5">
           <span className={`block w-5 h-0.5 bg-current rounded transition-all duration-300
             ${mobileOpen ? 'rotate-45 translate-y-2' : ''}`} />
@@ -112,9 +119,27 @@ export default function Navbar() {
         </button>
       </div>
 
+      {/* Mobile search bar */}
+      <div className={`md:hidden overflow-hidden transition-all duration-300
+        ${searchOpen ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'}`}>
+        <div className="bg-[#0a0a16]/98 backdrop-blur-2xl border-t border-white/[0.06] px-4 py-3">
+          <form onSubmit={handleSearch} className="flex gap-2">
+            <input value={query} onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search anime, movies..."
+              autoFocus={searchOpen}
+              className="flex-1 bg-white/6 border border-white/10 text-white placeholder-gray-600
+                px-4 py-3 rounded-xl text-sm outline-none focus:border-red-500/50 transition-colors" />
+            <button type="submit"
+              className="bg-red-600 hover:bg-red-500 text-white px-5 py-3 rounded-xl text-sm font-bold transition-colors">
+              Go
+            </button>
+          </form>
+        </div>
+      </div>
+
       {/* Mobile menu */}
       <div className={`md:hidden overflow-hidden transition-all duration-300
-        ${mobileOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+        ${mobileOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'}`}>
         <div className="bg-[#0a0a16]/98 backdrop-blur-2xl border-t border-white/[0.06] px-4 py-4 space-y-1">
           {links.map((l) => (
             <Link key={l.href} href={l.href} onClick={() => setMobileOpen(false)}
@@ -125,16 +150,6 @@ export default function Navbar() {
               <span>{l.icon}</span> {l.label}
             </Link>
           ))}
-          <form onSubmit={handleSearch} className="flex gap-2 pt-3">
-            <input value={query} onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search anime, movies..."
-              className="flex-1 bg-white/6 border border-white/10 text-white placeholder-gray-600
-                px-4 py-3 rounded-xl text-sm outline-none focus:border-red-500/50 transition-colors" />
-            <button type="submit"
-              className="bg-red-600 hover:bg-red-500 text-white px-5 py-3 rounded-xl text-sm font-bold transition-colors">
-              Go
-            </button>
-          </form>
         </div>
       </div>
     </nav>
