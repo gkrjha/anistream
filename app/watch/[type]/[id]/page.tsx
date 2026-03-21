@@ -2,9 +2,42 @@ import { getMovieDetails, getSeriesDetails, getSeriesEmbedUrl, getMovieEmbedUrl,
 import WatchPlayer from '@/components/WatchPlayer';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 
 interface Props {
   params: Promise<{ type: string; id: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { type, id } = await params;
+  const tmdbId = Number(id);
+  if (isNaN(tmdbId)) return {};
+
+  if (type === 'movie') {
+    const movie = await getMovieDetails(tmdbId);
+    if (!movie) return {};
+    const image = movie.poster_path ? `${TMDB_IMG}${movie.poster_path}` : undefined;
+    return {
+      title: `${movie.title} — Watch Free on AniStream`,
+      description: movie.overview?.slice(0, 160) || `Watch ${movie.title} free in HD on AniStream.`,
+      openGraph: { title: movie.title, description: movie.overview?.slice(0, 160), images: image ? [image] : [], type: 'video.movie' },
+      twitter: { card: 'summary_large_image', title: movie.title, images: image ? [image] : [] },
+    };
+  }
+
+  if (type === 'series') {
+    const series = await getSeriesDetails(tmdbId);
+    if (!series) return {};
+    const image = series.poster_path ? `${TMDB_IMG}${series.poster_path}` : undefined;
+    return {
+      title: `${series.name} — Watch Free on AniStream`,
+      description: series.overview?.slice(0, 160) || `Watch ${series.name} free in HD on AniStream.`,
+      openGraph: { title: series.name, description: series.overview?.slice(0, 160), images: image ? [image] : [], type: 'video.tv_show' },
+      twitter: { card: 'summary_large_image', title: series.name, images: image ? [image] : [] },
+    };
+  }
+
+  return {};
 }
 
 export default async function WatchPage({ params }: Props) {

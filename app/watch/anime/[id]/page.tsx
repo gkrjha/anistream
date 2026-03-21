@@ -2,9 +2,24 @@ import { getAnimeById, getAniflixId } from '@/lib/api';
 import AnimeWatchPlayer from '@/components/AnimeWatchPlayer';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 
 interface Props {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const malId = Number(id);
+  if (isNaN(malId)) return {};
+  const anime = await getAnimeById(malId);
+  if (!anime) return {};
+  return {
+    title: `${anime.title} — Watch Free on AniStream`,
+    description: anime.synopsis?.slice(0, 160) || `Watch ${anime.title} free on AniStream.`,
+    openGraph: { title: anime.title, description: anime.synopsis?.slice(0, 160), images: anime.image ? [anime.image] : [], type: 'video.tv_show' },
+    twitter: { card: 'summary_large_image', title: anime.title, images: anime.image ? [anime.image] : [] },
+  };
 }
 
 export default async function AnimeWatchPage({ params }: Props) {

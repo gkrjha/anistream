@@ -11,9 +11,26 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'AniStream — Watch Anime, Movies & Series Free',
+  title: {
+    default: 'AniStream — Watch Anime, Movies & Series Free',
+    template: '%s | AniStream',
+  },
   description: 'Stream thousands of anime, movies and web series in HD. Free, no ads, no signup.',
+  metadataBase: new URL('https://anistream.vercel.app'),
   manifest: '/manifest.json',
+  robots: { index: true, follow: true },
+  openGraph: {
+    siteName: 'AniStream',
+    type: 'website',
+    locale: 'en_US',
+    title: 'AniStream — Watch Anime, Movies & Series Free',
+    description: 'Stream thousands of anime, movies and web series in HD. Free, no ads, no signup.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AniStream — Watch Anime, Movies & Series Free',
+    description: 'Stream thousands of anime, movies and web series in HD. Free, no ads, no signup.',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
