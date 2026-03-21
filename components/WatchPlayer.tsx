@@ -190,21 +190,29 @@ export default function WatchPlayer({
         )}
       </div>
 
-      {/* Server selector */}
-      <div className="max-w-6xl mx-auto px-4 pt-3 pb-1 flex items-center gap-2 flex-wrap">
-        <span className="text-gray-600 text-xs font-medium">Server:</span>
-        {SERVERS.map((s) => (
-          <button key={s.key} onClick={() => setServer(s.key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border
-              ${server === s.key
-                ? 'bg-red-600 border-red-500 text-white shadow-[0_0_10px_rgba(229,9,20,0.3)]'
-                : 'bg-white/5 border-white/8 text-gray-400 hover:text-white hover:bg-white/10'}`}>
-            {s.label}
-            <span className={`text-[10px] font-normal ${server === s.key ? 'text-red-200' : 'text-gray-600'}`}>
-              {s.hint}
-            </span>
-          </button>
-        ))}
+      {/* Server selector + audio hint */}
+      <div className="max-w-6xl mx-auto px-4 pt-3 pb-1 flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-gray-600 text-xs font-medium">Server:</span>
+          {SERVERS.map((s) => (
+            <button key={s.key} onClick={() => setServer(s.key)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border
+                ${server === s.key
+                  ? 'bg-red-600 border-red-500 text-white shadow-[0_0_10px_rgba(229,9,20,0.3)]'
+                  : 'bg-white/5 border-white/8 text-gray-400 hover:text-white hover:bg-white/10'}`}>
+              {s.label}
+              <span className={`text-[10px] font-normal ${server === s.key ? 'text-red-200' : 'text-gray-600'}`}>
+                {s.hint}
+              </span>
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5 bg-white/[0.04] border border-white/10 px-3 py-1.5 rounded-lg">
+          <span className="text-sm">🔊</span>
+          <span className="text-[11px] text-gray-400">Audio/Captions: player ke</span>
+          <span className="text-[11px] text-white font-bold">⚙️ icon</span>
+          <span className="text-[11px] text-gray-400">se change karo</span>
+        </div>
       </div>
 
       {/* Player */}
