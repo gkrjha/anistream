@@ -12,6 +12,17 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'AniStream — Watch Anime, Movies & Series Free',
   description: 'Stream thousands of anime, movies and web series in HD. Free, no ads, no signup.',
+  manifest: '/manifest.json',
+  themeColor: '#e50914',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'AniStream',
+  },
+  icons: {
+    icon: '/icons/icon-192.png',
+    apple: '/icons/icon-192.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
