@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { saveProgress } from '@/lib/history';
+import { Play, ChevronLeft, ChevronRight, Star, ArrowLeft, SkipForward } from 'lucide-react';
 
 interface Props {
   title: string;
@@ -177,7 +178,7 @@ export default function WatchPlayer({
       <div className="flex items-center justify-between px-4 sm:px-6 py-3
         border-b border-white/5 bg-[#0e0e1a]/80 backdrop-blur-sm flex-wrap gap-2">
         <Link href="/" className="flex items-center gap-2 text-gray-400 hover:text-white text-sm transition-colors group">
-          <span className="group-hover:-translate-x-0.5 transition-transform">←</span> Back
+          <ArrowLeft size={15} className="group-hover:-translate-x-0.5 transition-transform" /> Back
         </Link>
         <div className="flex items-center gap-2 text-sm">
           <span className="text-white font-bold truncate max-w-[180px] sm:max-w-xs">{title}</span>
@@ -236,7 +237,7 @@ export default function WatchPlayer({
                   className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-xl
                     text-sm transition-all hover:shadow-[0_0_16px_rgba(229,9,20,0.4)]
                     flex items-center justify-center gap-2">
-                  ▶ Play Now
+                  <Play size={13} className="fill-white" /> Play Now
                 </button>
                 <div className="mt-3 h-0.5 bg-white/8 rounded-full overflow-hidden">
                   <div className="h-full bg-red-500 rounded-full transition-all duration-1000 ease-linear"
@@ -260,20 +261,20 @@ export default function WatchPlayer({
           <div className="flex items-center gap-2 flex-wrap">
             <button onClick={() => goToEpisode(season, episode - 1)} disabled={episode <= 1}
               className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/6 hover:bg-white/12
-                border border-white/8 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
-              ← Prev
+                border border-white/8 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-1.5">
+              <ChevronLeft size={15} /> Prev
             </button>
             <span className="text-gray-600 text-xs px-1">S{season} · Ep {episode}</span>
             <button onClick={() => goToEpisode(season, episode + 1)}
               className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/6 hover:bg-white/12
-                border border-white/8 transition-all">
-              Next →
+                border border-white/8 transition-all flex items-center gap-1.5">
+              Next <ChevronRight size={15} />
             </button>
             {autoNext && !showNextCard && (
               <button onClick={triggerNextCard}
                 className="px-3 py-2 rounded-xl text-xs text-gray-500 hover:text-white
-                  bg-white/4 hover:bg-white/8 border border-white/6 transition-all">
-                Episode ended?
+                  bg-white/4 hover:bg-white/8 border border-white/6 transition-all flex items-center gap-1.5">
+                <SkipForward size={13} /> Episode ended?
               </button>
             )}
           </div>
@@ -295,7 +296,9 @@ export default function WatchPlayer({
           <h1 className="text-2xl sm:text-3xl font-black leading-tight">{title}</h1>
           <div className="flex flex-wrap gap-2 items-center">
             <span className="flex items-center gap-1 bg-yellow-400/10 border border-yellow-400/20
-              text-yellow-400 font-bold px-3 py-1 rounded-full text-xs">★ {rating}</span>
+              text-yellow-400 font-bold px-3 py-1 rounded-full text-xs">
+              <Star size={10} className="fill-yellow-400" /> {rating}
+            </span>
             {year && <span className="text-gray-500 text-xs bg-white/5 border border-white/8 px-3 py-1 rounded-full">{year}</span>}
             <span className={`px-3 py-1 rounded-full text-xs font-bold border
               ${type === 'movie' ? 'bg-blue-600/20 border-blue-500/30 text-blue-300' : 'bg-emerald-600/20 border-emerald-500/30 text-emerald-300'}`}>

@@ -2,6 +2,7 @@ import { getTrendingAnime, getTopAnime, getPopularMovies, getPopularSeries } fro
 import HeroBanner from '@/components/HeroBanner';
 import SectionRow from '@/components/SectionRow';
 import ContinueWatching from '@/components/ContinueWatching';
+import { Flame, Star, Clapperboard, Tv2 } from 'lucide-react';
 
 export default async function HomePage() {
   const [trendingRaw, topAnimeRaw, movies, series] = await Promise.all([
@@ -11,7 +12,6 @@ export default async function HomePage() {
     getPopularSeries(1),
   ]);
 
-  // Guard against Redis returning non-array (e.g. cached object)
   const trending = Array.isArray(trendingRaw) ? trendingRaw : [];
   const topAnime = Array.isArray(topAnimeRaw) ? topAnimeRaw : [];
 
@@ -21,13 +21,13 @@ export default async function HomePage() {
 
       <div className="space-y-8 pb-10 mt-2">
         <ContinueWatching />
-        <SectionRow title="Trending Anime" icon="🔥" items={trending} viewAllHref="/anime" />
-        <SectionRow title="Top Rated Anime" icon="⭐" items={topAnime} viewAllHref="/anime" />
+        <SectionRow title="Trending Anime" icon={<Flame size={18} className="text-orange-400" />} items={trending} viewAllHref="/anime" />
+        <SectionRow title="Top Rated Anime" icon={<Star size={18} className="text-yellow-400" />} items={topAnime} viewAllHref="/anime" />
         {movies.items.length > 0 && (
-          <SectionRow title="Popular Movies" icon="🎬" items={movies.items.slice(0, 16)} viewAllHref="/movies" />
+          <SectionRow title="Popular Movies" icon={<Clapperboard size={18} className="text-sky-400" />} items={movies.items.slice(0, 16)} viewAllHref="/movies" />
         )}
         {series.items.length > 0 && (
-          <SectionRow title="Popular Web Series" icon="📺" items={series.items.slice(0, 16)} viewAllHref="/webseries" />
+          <SectionRow title="Popular Web Series" icon={<Tv2 size={18} className="text-emerald-400" />} items={series.items.slice(0, 16)} viewAllHref="/webseries" />
         )}
       </div>
     </>

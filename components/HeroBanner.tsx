@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { MediaItem } from '@/lib/types';
 import Modal from './Modal';
+import { Play, Info, Star } from 'lucide-react';
 
 export default function HeroBanner({ items }: { items: MediaItem[] }) {
   const [idx, setIdx] = useState(0);
@@ -98,7 +99,7 @@ export default function HeroBanner({ items }: { items: MediaItem[] }) {
               {/* Meta row */}
               <div className="flex items-center gap-4 mb-5 text-sm">
                 <div className="flex items-center gap-1.5 text-yellow-400 font-black text-base">
-                  <span>★</span>
+                  <Star size={14} className="fill-yellow-400" />
                   <span>{item.rating}</span>
                 </div>
                 {item.episodes && (
@@ -128,7 +129,7 @@ export default function HeroBanner({ items }: { items: MediaItem[] }) {
                     hover:-translate-y-0.5 active:translate-y-0">
                   <span className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center
                     group-hover:bg-white/30 transition-colors">
-                    <span className="text-sm ml-0.5">▶</span>
+                    <Play size={14} className="fill-white ml-0.5" />
                   </span>
                   Watch Now
                 </Link>
@@ -136,7 +137,7 @@ export default function HeroBanner({ items }: { items: MediaItem[] }) {
                   className="flex items-center gap-2.5 bg-white/10 hover:bg-white/15 text-white
                     font-bold px-8 py-4 rounded-2xl border border-white/20 hover:border-white/35
                     transition-all duration-200 hover:-translate-y-0.5 text-sm backdrop-blur-sm">
-                  <span className="text-base">⊕</span> More Info
+                  <Info size={16} /> More Info
                 </button>
               </div>
             </div>

@@ -3,10 +3,11 @@ import { useState, useRef } from 'react';
 import { MediaItem } from '@/lib/types';
 import MediaCard from './MediaCard';
 import Modal from './Modal';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Props {
   title: string;
-  icon: string;
+  icon: React.ReactNode;
   items: MediaItem[];
   viewAllHref?: string;
 }
@@ -31,7 +32,6 @@ export default function SectionRow({ title, icon, items, viewAllHref }: Props) {
 
   return (
     <section className="py-2 max-w-[1400px] mx-auto">
-      {/* Header */}
       <div className="flex items-center justify-between mb-5 px-6 sm:px-8">
         <div className="flex items-center gap-3">
           <div className="flex flex-col gap-0.5">
@@ -39,7 +39,7 @@ export default function SectionRow({ title, icon, items, viewAllHref }: Props) {
             <div className="w-3 h-[3px] bg-red-500/40 rounded-full" />
           </div>
           <h2 className="text-lg sm:text-xl font-black text-white flex items-center gap-2.5">
-            <span className="text-xl">{icon}</span>
+            {icon}
             {title}
           </h2>
         </div>
@@ -49,34 +49,29 @@ export default function SectionRow({ title, icon, items, viewAllHref }: Props) {
               className="text-xs text-gray-500 hover:text-red-400 font-bold transition-colors
                 mr-1 flex items-center gap-1 group">
               View All
-              <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+              <ChevronRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
             </a>
           )}
           <button onClick={() => scroll('left')} disabled={!canLeft}
-            className={`w-9 h-9 rounded-full border flex items-center justify-center text-lg
-              transition-all duration-200 font-bold
+            className={`w-9 h-9 rounded-full border flex items-center justify-center
+              transition-all duration-200
               ${canLeft
                 ? 'bg-white/8 border-white/12 text-white hover:bg-red-600 hover:border-red-500 hover:shadow-[0_0_16px_rgba(229,9,20,0.3)]'
                 : 'bg-white/3 border-white/5 text-gray-700 cursor-not-allowed'}`}>
-            ‹
+            <ChevronLeft size={16} />
           </button>
           <button onClick={() => scroll('right')} disabled={!canRight}
-            className={`w-9 h-9 rounded-full border flex items-center justify-center text-lg
-              transition-all duration-200 font-bold
+            className={`w-9 h-9 rounded-full border flex items-center justify-center
+              transition-all duration-200
               ${canRight
                 ? 'bg-white/8 border-white/12 text-white hover:bg-red-600 hover:border-red-500 hover:shadow-[0_0_16px_rgba(229,9,20,0.3)]'
                 : 'bg-white/3 border-white/5 text-gray-700 cursor-not-allowed'}`}>
-            ›
+            <ChevronRight size={16} />
           </button>
         </div>
       </div>
 
-      {/* Scroll row */}
-      <div
-        ref={rowRef}
-        onScroll={onScroll}
-        className="scroll-row px-6 sm:px-8 pb-4"
-      >
+      <div ref={rowRef} onScroll={onScroll} className="scroll-row px-6 sm:px-8 pb-4">
         {items.map((item) => (
           <div key={`${item.type}-${item.id}`} className="w-[150px] sm:w-[170px] md:w-[185px] shrink-0">
             <MediaCard item={item} onClick={setSelected} />

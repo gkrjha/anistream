@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { saveProgress } from '@/lib/history';
+import { Play, ChevronLeft, ChevronRight, Star, ArrowLeft, SkipForward, Tv2 } from 'lucide-react';
 
 // Fetch episode titles from Jikan (MAL) — free, no key needed
 async function fetchEpisodeTitles(malId: number): Promise<Record<number, string>> {
@@ -193,7 +194,7 @@ export default function AnimeWatchPlayer({
       <div className="flex items-center justify-between px-4 sm:px-6 py-3
         border-b border-white/5 bg-[#0e0e1a]/80 backdrop-blur-sm flex-wrap gap-2">
         <Link href="/" className="flex items-center gap-2 text-gray-400 hover:text-white text-sm transition-colors group">
-          <span className="group-hover:-translate-x-0.5 transition-transform">←</span> Back
+          <ArrowLeft size={15} className="group-hover:-translate-x-0.5 transition-transform" /> Back
         </Link>
         <div className="flex items-center gap-2 text-sm">
           <span className="text-white font-bold truncate max-w-[180px] sm:max-w-xs">{title}</span>
@@ -236,7 +237,7 @@ export default function AnimeWatchPlayer({
                 />
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0e0e1a] gap-4">
-                  <span className="text-5xl">😔</span>
+                  <Play size={40} className="text-gray-600" />
                   <p className="text-gray-500">Player unavailable for this anime</p>
                 </div>
               )}
@@ -252,7 +253,7 @@ export default function AnimeWatchPlayer({
                       className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-xl
                         text-sm transition-all hover:shadow-[0_0_16px_rgba(229,9,20,0.4)]
                         flex items-center justify-center gap-2">
-                      ▶ Play Now
+                      <Play size={13} className="fill-white" /> Play Now
                     </button>
                     <div className="mt-3 h-0.5 bg-white/8 rounded-full overflow-hidden">
                       <div className="h-full bg-red-500 rounded-full transition-all duration-1000 ease-linear"
@@ -278,20 +279,20 @@ export default function AnimeWatchPlayer({
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold
                   bg-white/6 hover:bg-white/12 border border-white/8
                   disabled:opacity-30 disabled:cursor-not-allowed transition-all">
-                ← Prev
+                <ChevronLeft size={15} /> Prev
               </button>
               <span className="text-gray-600 text-xs px-1">Ep {episode} / {epCount}</span>
               <button onClick={() => goToEpisode(episode + 1)} disabled={episode >= epCount}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold
                   bg-white/6 hover:bg-white/12 border border-white/8
                   disabled:opacity-30 disabled:cursor-not-allowed transition-all">
-                Next →
+                Next <ChevronRight size={15} />
               </button>
               {autoNext && episode < epCount && !showNextCard && (
                 <button onClick={() => triggerNextCard()}
                   className="px-3 py-2 rounded-xl text-xs text-gray-500 hover:text-white
-                    bg-white/4 hover:bg-white/8 border border-white/6 transition-all">
-                  Episode ended?
+                    bg-white/4 hover:bg-white/8 border border-white/6 transition-all flex items-center gap-1.5">
+                  <SkipForward size={13} /> Episode ended?
                 </button>
               )}
             </div>
@@ -329,10 +330,14 @@ export default function AnimeWatchPlayer({
             <h1 className="text-2xl sm:text-3xl font-black leading-tight tracking-tight">{title}</h1>
             <div className="flex flex-wrap items-center gap-2">
               <span className="flex items-center gap-1.5 bg-yellow-400/12 border border-yellow-400/25
-                text-yellow-400 font-black px-3 py-1.5 rounded-xl text-xs">★ {rating}</span>
+                text-yellow-400 font-black px-3 py-1.5 rounded-xl text-xs">
+                <Star size={10} className="fill-yellow-400" /> {rating}
+              </span>
               {year && <span className="text-xs text-gray-400 bg-white/[0.06] border border-white/10 px-3 py-1.5 rounded-xl">{year}</span>}
               <span className="text-xs font-black px-3 py-1.5 rounded-xl uppercase tracking-wide
-                bg-violet-600/20 border border-violet-500/30 text-violet-300">Anime</span>
+                bg-violet-600/20 border border-violet-500/30 text-violet-300 flex items-center gap-1.5">
+                <Tv2 size={11} /> Anime
+              </span>
               {genres.slice(0, 5).map((g) => (
                 <span key={g} className="text-xs text-gray-400 bg-white/[0.05] border border-white/[0.08] px-3 py-1.5 rounded-xl">{g}</span>
               ))}

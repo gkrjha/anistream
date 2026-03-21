@@ -2,8 +2,10 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/Navbar';
+import Logo from '@/components/Logo';
+import SplashScreen from '@/components/SplashScreen';
 import Script from 'next/script';
-import { Analytics } from '@vercel/analytics/next';
+// import { Analytics } from '@vercel/analytics/next'; // run: npm i @vercel/analytics
 
 const inter = Inter({
   subsets: ['latin'],
@@ -38,7 +40,11 @@ export const metadata: Metadata = {
     title: 'AniStream',
   },
   icons: {
-    icon: '/icons/icon-192.png',
+    icon: [
+      { url: '/icons/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
     apple: '/icons/icon-192.png',
   },
 };
@@ -48,27 +54,63 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={inter.variable}>
       <head>
         <meta name="theme-color" content="#e50914" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="AniStream" />
+        <meta name="application-name" content="AniStream" />
+        <meta name="msapplication-TileColor" content="#e50914" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png" />
       </head>
       <body className="bg-[#06060f] text-gray-100 font-[var(--font-inter)] antialiased">
+        <SplashScreen />
         <Navbar />
         <main className="pt-[68px]">{children}</main>
 
         <footer className="mt-20 border-t border-white/[0.05]">
+          {/* Anime Characters Banner */}
+          <div className="relative overflow-hidden bg-gradient-to-b from-transparent to-[#06060f] border-b border-white/[0.04]">
+            <div className="flex gap-0 h-[180px] sm:h-[220px]">
+              {[
+                { src: 'https://s4.anilist.co/file/anilistcdn/character/large/b45627-CR68RyZmddGG.png', name: 'Levi' },
+                { src: 'https://s4.anilist.co/file/anilistcdn/character/large/b127691-9zqh1xpIubn7.png', name: 'Gojo' },
+                { src: 'https://s4.anilist.co/file/anilistcdn/character/large/b27-Z5O02kQUydpT.jpg', name: 'Killua' },
+                { src: 'https://s4.anilist.co/file/anilistcdn/character/large/b40-MNypXsxSRb1R.png', name: 'Luffy' },
+                { src: 'https://s4.anilist.co/file/anilistcdn/character/large/b40882-dsj7IP943WFF.jpg', name: 'Eren' },
+                { src: 'https://s4.anilist.co/file/anilistcdn/character/large/b62-S7oAeA9WInjV.png', name: 'Zoro' },
+                { src: 'https://s4.anilist.co/file/anilistcdn/character/large/b88572-IzTwXEHSobRs.jpg', name: 'Emilia' },
+                { src: 'https://s4.anilist.co/file/anilistcdn/character/large/b417-gVLmIJu9phcK.png', name: 'Lelouch' },
+                { src: 'https://s4.anilist.co/file/anilistcdn/character/large/b40881-F3gr1PkreDvj.png', name: 'Mikasa' },
+                { src: 'https://s4.anilist.co/file/anilistcdn/character/large/b71-1W4panC53vfs.png', name: 'L' },
+                { src: 'https://s4.anilist.co/file/anilistcdn/character/large/b87275-mb13EWZBdbh3.png', name: 'Kaneki' },
+                { src: 'https://s4.anilist.co/file/anilistcdn/character/large/b89334-OPj1hCzvrt7X.png', name: 'Reigen' },
+              ].map((char, i) => (
+                <div key={i} className="relative flex-1 min-w-[80px] sm:min-w-[100px] overflow-hidden group">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={char.src}
+                    alt={char.name}
+                    className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110 opacity-60 group-hover:opacity-90"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#06060f] via-transparent to-transparent" />
+                  <div className="absolute inset-x-0 bottom-2 text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="text-[10px] text-white/70 font-semibold">{char.name}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Left/right fade */}
+            <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#06060f] to-transparent pointer-events-none" />
+            <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#06060f] to-transparent pointer-events-none" />
+          </div>
+
           <div className="max-w-[1400px] mx-auto px-8 py-12">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
               {/* Brand */}
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center
-                  shadow-[0_0_20px_rgba(229,9,20,0.4)]">
-                  <span className="text-white text-sm font-black ml-0.5">▶</span>
-                </div>
-                <div>
-                  <span className="text-white font-black text-xl">Ani<span className="text-red-500">Stream</span></span>
-                  <p className="text-gray-600 text-xs mt-0.5">Watch Free. No Signup.</p>
-                </div>
-              </div>
+              <Logo subtitle="Watch Free. No Signup." />
 
               <p className="text-gray-700 text-xs text-center">
                 © 2026 AniStream · Powered by AniList & TMDB · For entertainment purposes only
@@ -85,12 +127,30 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </footer>
         <Script id="sw-register" strategy="afterInteractive">{`
           if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-              navigator.serviceWorker.register('/sw.js');
-            });
+            function registerSW() {
+              navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .then(function(reg) {
+                  reg.addEventListener('updatefound', function() {
+                    var newSW = reg.installing;
+                    if (newSW) {
+                      newSW.addEventListener('statechange', function() {
+                        if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                          newSW.postMessage({ type: 'SKIP_WAITING' });
+                        }
+                      });
+                    }
+                  });
+                })
+                .catch(function(err) { console.warn('SW registration failed:', err); });
+            }
+            // Register immediately if page already loaded, else wait
+            if (document.readyState === 'complete') {
+              registerSW();
+            } else {
+              window.addEventListener('load', registerSW);
+            }
           }
         `}</Script>
-        <Analytics />
       </body>
     </html>
   );

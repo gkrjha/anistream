@@ -2,6 +2,8 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { Home, Tv2, Clapperboard, MonitorPlay, Search, X } from 'lucide-react';
+import Logo from './Logo';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -18,10 +20,10 @@ export default function Navbar() {
   }, []);
 
   const links = [
-    { href: '/', label: 'Home', icon: '⌂' },
-    { href: '/anime', label: 'Anime', icon: '🐉' },
-    { href: '/movies', label: 'Movies', icon: '🎬' },
-    { href: '/webseries', label: 'Series', icon: '📺' },
+    { href: '/', label: 'Home', icon: Home },
+    { href: '/anime', label: 'Anime', icon: Tv2 },
+    { href: '/movies', label: 'Movies', icon: Clapperboard },
+    { href: '/webseries', label: 'Series', icon: MonitorPlay },
   ];
 
   function handleSearch(e: React.FormEvent) {
@@ -41,29 +43,19 @@ export default function Navbar() {
       <div className="max-w-[1400px] mx-auto px-4 sm:px-8 h-[68px] flex items-center gap-6">
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-          <div className="relative w-9 h-9 flex items-center justify-center">
-            <div className="absolute inset-0 bg-red-600 rounded-xl rotate-6 group-hover:rotate-12 transition-transform duration-300" />
-            <div className="absolute inset-0 bg-red-500 rounded-xl group-hover:scale-95 transition-transform duration-300" />
-            <span className="relative text-white text-sm font-black z-10 ml-0.5">▶</span>
-          </div>
-          <span className="text-white font-black text-xl tracking-tight">
-            Ani<span className="text-red-500">Stream</span>
-          </span>
-        </Link>
+        <Logo />
 
         {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-1 ml-2">
-          {links.map((l) => {
-            const active = pathname === l.href;
+          {links.map(({ href, label, icon: Icon }) => {
+            const active = pathname === href;
             return (
-              <Link key={l.href} href={l.href}
-                className={`relative px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200
+              <Link key={href} href={href}
+                className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200
                   ${active ? 'text-white' : 'text-gray-400 hover:text-white'}`}>
-                {active && (
-                  <span className="absolute inset-0 bg-white/8 rounded-lg" />
-                )}
-                <span className="relative">{l.label}</span>
+                {active && <span className="absolute inset-0 bg-white/8 rounded-lg" />}
+                <Icon size={15} className="relative" />
+                <span className="relative">{label}</span>
                 {active && (
                   <span className="absolute -bottom-[1px] left-1/2 -translate-x-1/2 w-4 h-[2px] bg-red-500 rounded-full" />
                 )}
@@ -78,15 +70,14 @@ export default function Navbar() {
             <div className={`flex items-center bg-white/[0.07] border rounded-xl overflow-hidden
               transition-all duration-300 ${searchOpen ? 'border-red-500/60 w-64' : 'border-white/10 w-10 hover:w-48 hover:border-white/20'}`}
               onClick={() => setSearchOpen(true)}>
-              <span className="pl-3 pr-2 text-gray-500 text-sm shrink-0">🔍</span>
+              <Search size={14} className="ml-3 mr-2 text-gray-500 shrink-0" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onFocus={() => setSearchOpen(true)}
                 onBlur={() => !query && setSearchOpen(false)}
                 placeholder="Search..."
-                className="bg-transparent text-white placeholder-gray-600 py-2.5 pr-3 text-sm
-                  outline-none w-full min-w-0"
+                className="bg-transparent text-white placeholder-gray-600 py-2.5 pr-3 text-sm outline-none w-full min-w-0"
               />
             </div>
             {searchOpen && query && (
@@ -103,25 +94,21 @@ export default function Navbar() {
         <button onClick={() => { setSearchOpen((v) => !v); setMobileOpen(false); }}
           className="md:hidden ml-auto w-10 h-10 flex items-center justify-center
             text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-white/5">
-          <span className="text-lg">🔍</span>
+          <Search size={18} />
         </button>
 
         {/* Mobile toggle */}
         <button onClick={() => { setMobileOpen((v) => !v); setSearchOpen(false); }}
           className="md:hidden w-10 h-10 flex flex-col items-center justify-center gap-1.5
             text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-white/5">
-          <span className={`block w-5 h-0.5 bg-current rounded transition-all duration-300
-            ${mobileOpen ? 'rotate-45 translate-y-2' : ''}`} />
-          <span className={`block w-5 h-0.5 bg-current rounded transition-all duration-300
-            ${mobileOpen ? 'opacity-0' : ''}`} />
-          <span className={`block w-5 h-0.5 bg-current rounded transition-all duration-300
-            ${mobileOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+          <span className={`block w-5 h-0.5 bg-current rounded transition-all duration-300 ${mobileOpen ? 'rotate-45 translate-y-2' : ''}`} />
+          <span className={`block w-5 h-0.5 bg-current rounded transition-all duration-300 ${mobileOpen ? 'opacity-0' : ''}`} />
+          <span className={`block w-5 h-0.5 bg-current rounded transition-all duration-300 ${mobileOpen ? '-rotate-45 -translate-y-2' : ''}`} />
         </button>
       </div>
 
       {/* Mobile search bar */}
-      <div className={`md:hidden overflow-hidden transition-all duration-300
-        ${searchOpen ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'}`}>
+      <div className={`md:hidden overflow-hidden transition-all duration-300 ${searchOpen ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'}`}>
         <div className="bg-[#0a0a16]/98 backdrop-blur-2xl border-t border-white/[0.06] px-4 py-3">
           <form onSubmit={handleSearch} className="flex gap-2">
             <input value={query} onChange={(e) => setQuery(e.target.value)}
@@ -138,16 +125,15 @@ export default function Navbar() {
       </div>
 
       {/* Mobile menu */}
-      <div className={`md:hidden overflow-hidden transition-all duration-300
-        ${mobileOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'}`}>
+      <div className={`md:hidden overflow-hidden transition-all duration-300 ${mobileOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'}`}>
         <div className="bg-[#0a0a16]/98 backdrop-blur-2xl border-t border-white/[0.06] px-4 py-4 space-y-1">
-          {links.map((l) => (
-            <Link key={l.href} href={l.href} onClick={() => setMobileOpen(false)}
+          {links.map(({ href, label, icon: Icon }) => (
+            <Link key={href} href={href} onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all
-                ${pathname === l.href
+                ${pathname === href
                   ? 'bg-red-600/15 text-red-400 border border-red-500/20'
                   : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
-              <span>{l.icon}</span> {l.label}
+              <Icon size={16} /> {label}
             </Link>
           ))}
         </div>
