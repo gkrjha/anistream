@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { useSearchParams, useRouter as useNextRouter, usePathname } from 'next/navigation';
+import { useRouter as useNextRouter, usePathname } from 'next/navigation';
 import { saveProgress } from '@/lib/history';
 import { Play, ChevronLeft, ChevronRight, Star, ArrowLeft, SkipForward, Tv2 } from 'lucide-react';
 
@@ -42,6 +42,8 @@ interface Props {
   year: string;
   genres: string[];
   aniflixId?: number | null;
+  initialEp?: number;
+  initialLang?: 'sub' | 'dub';
 }
 
 // Anime episode avg = 24 min. Trigger next card 90s before expected end.
@@ -53,20 +55,16 @@ type Server = 'vidnest' | 'aniflix';
 
 export default function AnimeWatchPlayer({
   title, image, anilistId, malId, totalEpisodes, synopsis, rating, year, genres, aniflixId,
+  initialEp = 1, initialLang = 'sub',
 }: Props) {
   const epCount = Math.max(totalEpisodes || 1, 1);
-  const searchParams = useSearchParams();
   const nextRouter = useNextRouter();
   const pathname = usePathname();
 
-  // Resume from URL params (?ep=5&lang=dub)
-  const resumeEp = Number(searchParams.get('ep') ?? 1) || 1;
-  const resumeLang = (searchParams.get('lang') === 'dub' ? 'dub' : 'sub') as 'sub' | 'dub';
-
-  const [iframeKey, setIframeKey] = useState(0); // increment to force reload
-  const [visibleEps, setVisibleEps] = useState(Math.min(Math.max(resumeEp + 20, 100), epCount));
-  const [episode, setEpisode] = useState(Math.min(resumeEp, epCount));
-  const [lang, setLang] = useState<'sub' | 'dub'>(resumeLang);
+  const [iframeKey, setIframeKey] = useState(0);
+  const [visibleEps, setVisibleEps] = useState(Math.min(Math.max(initialEp + 20, 100), epCount));
+  const [episode, setEpisode] = useState(Math.min(initialEp, epCount));
+  const [lang, setLang] = useState<'sub' | 'dub'>(initialLang);
   const [autoNext, setAutoNext] = useState(true);
   const [server, setServer] = useState<Server>('vidnest');
   const [showNextCard, setShowNextCard] = useState(false);
@@ -99,9 +97,7 @@ export default function AnimeWatchPlayer({
     if (server === 'aniflix' && aniflixId) return `https://aniflix.uno/player/${aniflixId}/?ep=${episode}`;
     if (anilistId) return `https://vidnest.fun/anime/${anilistId}/${episode}/${lang}`;
     return null;
-  })();
-
-  const stopCountdown = useCallback(() => {
+  })();  const stopCountdown = useCallback(() => {
     if (countdownRef.current) { clearInterval(countdownRef.current); countdownRef.current = null; }
   }, []);
 
@@ -243,7 +239,6 @@ export default function AnimeWatchPlayer({
                     className="absolute inset-0 w-full h-full"
                     allowFullScreen
                     allow="autoplay; fullscreen; picture-in-picture"
-                    sandbox="allow-scripts allow-same-origin allow-fullscreen allow-forms allow-presentation"
                     referrerPolicy="origin"
                     onLoad={onIframeLoad}
                   />
@@ -293,56 +288,81 @@ export default function AnimeWatchPlayer({
           </div>
 
           {/* Controls */}
-          <div className="px-4 py-3 flex items-center justify-between flex-wrap gap-3
-            bg-[#0a0a14] border-b border-white/5
-            xl:border xl:border-t-0 xl:border-white/[0.06] xl:rounded-b-xl">
-            <div className="flex items-center gap-2 flex-wrap">
-              <button onClick={() => goToEpisode(episode - 1)} disabled={episode <= 1}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold
-                  bg-white/6 hover:bg-white/12 border border-white/8
-                  disabled:opacity-30 disabled:cursor-not-allowed transition-all">
-                <ChevronLeft size={15} /> Prev
-              </button>
-              <span className="text-gray-600 text-xs px-1">Ep {episode} / {epCount}</span>
-              <button onClick={() => goToEpisode(episode + 1)} disabled={episode >= epCount}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold
-                  bg-white/6 hover:bg-white/12 border border-white/8
-                  disabled:opacity-30 disabled:cursor-not-allowed transition-all">
-                Next <ChevronRight size={15} />
-              </button>
-              {autoNext && episode < epCount && !showNextCard && (
-                <button onClick={() => triggerNextCard()}
-                  className="px-3 py-2 rounded-xl text-xs text-gray-500 hover:text-white
-                    bg-white/4 hover:bg-white/8 border border-white/6 transition-all flex items-center gap-1.5">
-                  <SkipForward size={13} /> Episode ended?
+          <div className="bg-[#0a0a16] border-b border-white/[0.05]
+            xl:border xl:border-t-0 xl:border-white/[0.06] xl:rounded-b-xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 gap-3 flex-wrap">
+
+              {/* Prev / counter / Next */}
+              <div className="flex items-center gap-2">
+                <button onClick={() => goToEpisode(episode - 1)} disabled={episode <= 1}
+                  className="group flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold
+                    bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] hover:border-white/20
+                    disabled:opacity-25 disabled:cursor-not-allowed transition-all duration-200">
+                  <ChevronLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+                  Prev
                 </button>
-              )}
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {server === 'vidnest' && (
-                <div className="flex items-center gap-0.5 bg-white/5 rounded-xl p-1 border border-white/6">
-                  {(['sub', 'dub'] as const).map((l) => (
-                    <button key={l} onClick={() => setLang(l)}
-                      className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition-all
-                        ${lang === l ? 'bg-red-600 text-white shadow-[0_0_10px_rgba(229,9,20,0.3)]' : 'text-gray-500 hover:text-white'}`}>
-                      {l}
-                    </button>
-                  ))}
+
+                <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl
+                  bg-white/[0.04] border border-white/[0.06]">
+                  <span className="text-white font-black text-xs">{episode}</span>
+                  <span className="text-white/20 text-xs">/</span>
+                  <span className="text-gray-500 text-xs">{epCount}</span>
                 </div>
-              )}
-              <div className="flex items-center gap-0.5 bg-white/5 rounded-xl p-1 border border-white/6">
-                <button onClick={() => setServer('vidnest')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all
-                    ${server === 'vidnest' ? 'bg-purple-600 text-white' : 'text-gray-500 hover:text-white'}`}>
-                  VidNest
+
+                <button onClick={() => goToEpisode(episode + 1)} disabled={episode >= epCount}
+                  className="group flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold
+                    bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] hover:border-white/20
+                    disabled:opacity-25 disabled:cursor-not-allowed transition-all duration-200">
+                  Next
+                  <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
                 </button>
-                {aniflixId && (
-                  <button onClick={() => setServer('aniflix')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all
-                      ${server === 'aniflix' ? 'bg-orange-600 text-white' : 'text-gray-500 hover:text-white'}`}>
-                    Aniflix
+
+                {autoNext && episode < epCount && !showNextCard && (
+                  <button onClick={() => triggerNextCard()}
+                    className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs
+                      text-gray-600 hover:text-white bg-white/[0.03] hover:bg-white/[0.07]
+                      border border-white/[0.05] hover:border-white/[0.12] transition-all">
+                    <SkipForward size={12} /> Ended?
                   </button>
                 )}
+              </div>
+
+              {/* Right — Sub/Dub + Server */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {server === 'vidnest' && (
+                  <div className="flex items-center bg-white/[0.05] rounded-xl p-1 border border-white/[0.07]">
+                    {(['sub', 'dub'] as const).map((l) => (
+                      <button key={l} onClick={() => setLang(l)}
+                        className={`px-4 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all duration-200
+                          ${lang === l
+                            ? 'bg-gradient-to-br from-red-500 to-red-700 text-white shadow-[0_2px_12px_rgba(229,9,20,0.4)]'
+                            : 'text-gray-500 hover:text-gray-300'}`}>
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex items-center bg-white/[0.05] rounded-xl p-1 border border-white/[0.07]">
+                  <button onClick={() => setServer('vidnest')}
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[11px] font-black transition-all duration-200
+                      ${server === 'vidnest'
+                        ? 'bg-gradient-to-br from-violet-500 to-purple-700 text-white shadow-[0_2px_12px_rgba(139,92,246,0.4)]'
+                        : 'text-gray-500 hover:text-gray-300'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${server === 'vidnest' ? 'bg-white' : 'bg-gray-600'}`} />
+                    VidNest
+                  </button>
+                  {aniflixId && (
+                    <button onClick={() => setServer('aniflix')}
+                      className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[11px] font-black transition-all duration-200
+                        ${server === 'aniflix'
+                          ? 'bg-gradient-to-br from-orange-500 to-orange-700 text-white shadow-[0_2px_12px_rgba(249,115,22,0.4)]'
+                          : 'text-gray-500 hover:text-gray-300'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${server === 'aniflix' ? 'bg-white' : 'bg-gray-600'}`} />
+                      Aniflix
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>

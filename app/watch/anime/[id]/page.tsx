@@ -6,10 +6,10 @@ import type { Metadata } from 'next';
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ ep?: string; lang?: string }>;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
+export async function generateMetadata({ params }: Props): Promise<Metadata> {  const { id } = await params;
   const malId = Number(id);
   if (isNaN(malId)) return {};
   const anime = await getAnimeById(malId);
@@ -22,8 +22,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function AnimeWatchPage({ params }: Props) {
+export default async function AnimeWatchPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const { ep, lang } = await searchParams;
   const malId = Number(id);
   if (isNaN(malId)) return notFound();
 
@@ -47,6 +48,8 @@ export default async function AnimeWatchPage({ params }: Props) {
         year={anime.year}
         genres={anime.genres}
         aniflixId={aniflixId}
+        initialEp={Number(ep ?? 1) || 1}
+        initialLang={(lang === 'dub' ? 'dub' : 'sub') as 'sub' | 'dub'}
       />
     </Suspense>
   );

@@ -225,7 +225,6 @@ export default function WatchPlayer({
           <iframe key={`${iframeKey}-${currentEmbed}`} src={currentEmbed}
             className="absolute inset-0 w-full h-full"
             allowFullScreen allow="autoplay; fullscreen; picture-in-picture"
-            sandbox="allow-scripts allow-same-origin allow-fullscreen allow-forms allow-presentation"
             referrerPolicy="origin" onLoad={onIframeLoad} />
 
           {/* Retry button */}
