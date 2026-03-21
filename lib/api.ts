@@ -148,7 +148,7 @@ export async function getTrendingAnime(limit = 12): Promise<MediaItem[]> {
 }
 
 export async function getTopAnime(limit = 12): Promise<MediaItem[]> {
-  return cached(`top_anime_${limit}`, async () => {
+  const result = await cached(`top_anime_${limit}`, async () => {
     const data = await anilist<{ Page: { media: AniListAnime[] } }>(`
       query($limit:Int){
         Page(page:1,perPage:$limit){
@@ -157,7 +157,8 @@ export async function getTopAnime(limit = 12): Promise<MediaItem[]> {
       }
     `, { limit });
     return (data?.Page?.media ?? []).map(parseAniListAnime);
-  }, 21600); // 6 hours — top rated changes rarely
+  }, 21600);
+  return Array.isArray(result) ? result : [];
 }
 
 export async function getAnimeList(

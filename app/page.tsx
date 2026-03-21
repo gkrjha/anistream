@@ -4,12 +4,16 @@ import SectionRow from '@/components/SectionRow';
 import ContinueWatching from '@/components/ContinueWatching';
 
 export default async function HomePage() {
-  const [trending, topAnime, movies, series] = await Promise.all([
+  const [trendingRaw, topAnimeRaw, movies, series] = await Promise.all([
     getTrendingAnime(16),
     getTopAnime(16),
     getPopularMovies(1),
     getPopularSeries(1),
   ]);
+
+  // Guard against Redis returning non-array (e.g. cached object)
+  const trending = Array.isArray(trendingRaw) ? trendingRaw : [];
+  const topAnime = Array.isArray(topAnimeRaw) ? topAnimeRaw : [];
 
   return (
     <>
