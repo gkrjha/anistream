@@ -24,13 +24,17 @@ export async function cached<T>(
 ): Promise<T> {
   if (redis) {
     try {
-      const hit = await redis.get<T>(key);
-      if (hit !== null && hit !== undefined) return hit;
+      const hit = await redis.get<unknown>(key);
+      if (hit !== null && hit !== undefined) {
+        // Parse if string, return directly if already object
+        const parsed = typeof hit === 'string' ? JSON.parse(hit) : hit;
+        return parsed as T;
+      }
       const data = await fn();
-      await redis.set(key, data, { ex: ttlSeconds });
+      // Always store as JSON string for consistency
+      await redis.set(key, JSON.stringify(data), { ex: ttlSeconds });
       return data;
     } catch {
-      // Redis error → fallback to direct fetch
       return fn();
     }
   }

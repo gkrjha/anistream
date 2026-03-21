@@ -134,7 +134,7 @@ const ANIME_FIELDS = `
 
 // ── Anime fetchers (AniList) ──────────────────────────────────
 export async function getTrendingAnime(limit = 12): Promise<MediaItem[]> {
-  return cached(`trending_anime_${limit}`, async () => {
+  const result = await cached(`trending_anime_${limit}`, async () => {
     const data = await anilist<{ Page: { media: AniListAnime[] } }>(`
       query($limit:Int){
         Page(page:1,perPage:$limit){
@@ -143,7 +143,8 @@ export async function getTrendingAnime(limit = 12): Promise<MediaItem[]> {
       }
     `, { limit });
     return (data?.Page?.media ?? []).map(parseAniListAnime);
-  }, 1800); // 30 min
+  }, 1800);
+  return Array.isArray(result) ? result : [];
 }
 
 export async function getTopAnime(limit = 12): Promise<MediaItem[]> {
