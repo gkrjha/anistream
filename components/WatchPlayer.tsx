@@ -31,31 +31,31 @@ interface ServerOption {
 const SERVERS: ServerOption[] = [
   {
     key: 'vidnest',
-    label: 'Auto',
+    label: 'Server 1',
     flag: '🌐',
-    lang: 'Original',
+    lang: 'Default',
     movieUrl: (id) => `https://vidnest.fun/movie/${id}`,
     tvUrl: (id, s, e) => `https://vidnest.fun/tv/${id}/${s}/${e}`,
   },
   {
     key: 'vidsrc_en',
-    label: 'English',
-    flag: '🇺🇸',
-    lang: 'English',
+    label: 'Server 2',
+    flag: '▶',
+    lang: 'VidSrc',
     movieUrl: (id) => `https://vidsrc.to/embed/movie/${id}`,
     tvUrl: (id, s, e) => `https://vidsrc.to/embed/tv/${id}/${s}/${e}`,
   },
   {
     key: 'vidsrc_hi',
-    label: 'Hindi',
-    flag: '🇮🇳',
-    lang: 'Hindi',
-    movieUrl: (id) => `https://vidsrc.cc/v2/embed/movie/${id}?lang=hi`,
-    tvUrl: (id, s, e) => `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}?lang=hi`,
+    label: 'Server 3',
+    flag: '▶',
+    lang: 'VidSrc2',
+    movieUrl: (id) => `https://vidsrc.cc/v2/embed/movie/${id}`,
+    tvUrl: (id, s, e) => `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}`,
   },
   {
     key: 'multiembed',
-    label: 'Multi',
+    label: 'Server 4',
     flag: '🎵',
     lang: 'Multi-audio',
     movieUrl: (id) => `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1`,
@@ -63,9 +63,9 @@ const SERVERS: ServerOption[] = [
   },
   {
     key: 'vidlink',
-    label: 'VidLink',
+    label: 'Server 5',
     flag: '🔊',
-    lang: 'Alt audio',
+    lang: 'VidLink',
     movieUrl: (id) => `https://vidlink.pro/movie/${id}?multiLang=true`,
     tvUrl: (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}?multiLang=true`,
   },
@@ -196,9 +196,9 @@ export default function WatchPlayer({
         )}
       </div>
 
-      {/* Audio / Language selector */}
+      {/* Audio / Server selector */}
       <div className="max-w-6xl mx-auto px-4 pt-3 pb-1 flex items-center gap-2 flex-wrap">
-        <span className="text-gray-500 text-xs font-medium flex items-center gap-1">🔊 Audio:</span>
+        <span className="text-gray-500 text-xs font-medium">Server:</span>
         {SERVERS.map((s) => (
           <button key={s.key} onClick={() => setServer(s.key)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border
@@ -212,6 +212,9 @@ export default function WatchPlayer({
             </span>
           </button>
         ))}
+        <span className="text-[11px] text-gray-600 ml-1">
+          Hindi audio ke liye alag server try karo — availability movie pe depend karti hai
+        </span>
       </div>
 
       {/* Player */}
