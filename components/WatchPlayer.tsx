@@ -17,12 +17,13 @@ interface Props {
   totalSeasons?: number;
 }
 
-type ServerKey = 'vidnest' | 'vidsrc' | 'vidsrcme' | 'autoembed' | 'embed2';
+type ServerKey = 'vidnest' | 'vidsrc_en' | 'vidsrc_hi' | 'multiembed' | 'vidlink';
 
 interface ServerOption {
   key: ServerKey;
   label: string;
-  hint: string;
+  flag: string;
+  lang: string;
   movieUrl: (id: number) => string;
   tvUrl: (id: number, s: number, e: number) => string;
 }
@@ -30,38 +31,43 @@ interface ServerOption {
 const SERVERS: ServerOption[] = [
   {
     key: 'vidnest',
-    label: 'Server 1',
-    hint: 'Multi-audio',
+    label: 'Auto',
+    flag: '🌐',
+    lang: 'Original',
     movieUrl: (id) => `https://vidnest.fun/movie/${id}`,
     tvUrl: (id, s, e) => `https://vidnest.fun/tv/${id}/${s}/${e}`,
   },
   {
-    key: 'vidsrc',
-    label: 'Server 2',
-    hint: 'Hindi/Multi',
-    movieUrl: (id) => `https://vidsrc.xyz/embed/movie/${id}`,
-    tvUrl: (id, s, e) => `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}`,
+    key: 'vidsrc_en',
+    label: 'English',
+    flag: '🇺🇸',
+    lang: 'English',
+    movieUrl: (id) => `https://vidsrc.pro/embed/movie/${id}`,
+    tvUrl: (id, s, e) => `https://vidsrc.pro/embed/tv/${id}/${s}/${e}`,
   },
   {
-    key: 'vidsrcme',
-    label: 'Server 3',
-    hint: 'Alt audio',
-    movieUrl: (id) => `https://vidsrc.me/embed/movie?tmdb=${id}`,
-    tvUrl: (id, s, e) => `https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}`,
+    key: 'vidsrc_hi',
+    label: 'Hindi',
+    flag: '🇮🇳',
+    lang: 'Hindi',
+    movieUrl: (id) => `https://vidsrc.pro/embed/movie/${id}?lang=hi`,
+    tvUrl: (id, s, e) => `https://vidsrc.pro/embed/tv/${id}/${s}/${e}?lang=hi`,
   },
   {
-    key: 'autoembed',
-    label: 'Server 4',
-    hint: 'Backup',
-    movieUrl: (id) => `https://autoembed.co/movie/tmdb/${id}`,
-    tvUrl: (id, s, e) => `https://autoembed.co/tv/tmdb/${id}-${s}-${e}`,
+    key: 'multiembed',
+    label: 'Multi',
+    flag: '🎵',
+    lang: 'Multi-audio',
+    movieUrl: (id) => `https://multiembed.mov/?video_id=${id}&tmdb=1`,
+    tvUrl: (id, s, e) => `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}`,
   },
   {
-    key: 'embed2',
-    label: 'Server 5',
-    hint: 'Backup 2',
-    movieUrl: (id) => `https://www.2embed.cc/embed/${id}`,
-    tvUrl: (id, s, e) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`,
+    key: 'vidlink',
+    label: 'VidLink',
+    flag: '🔊',
+    lang: 'Alt audio',
+    movieUrl: (id) => `https://vidlink.pro/movie/${id}`,
+    tvUrl: (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}`,
   },
 ];
 
@@ -190,29 +196,22 @@ export default function WatchPlayer({
         )}
       </div>
 
-      {/* Server selector + audio hint */}
-      <div className="max-w-6xl mx-auto px-4 pt-3 pb-1 flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-gray-600 text-xs font-medium">Server:</span>
-          {SERVERS.map((s) => (
-            <button key={s.key} onClick={() => setServer(s.key)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border
-                ${server === s.key
-                  ? 'bg-red-600 border-red-500 text-white shadow-[0_0_10px_rgba(229,9,20,0.3)]'
-                  : 'bg-white/5 border-white/8 text-gray-400 hover:text-white hover:bg-white/10'}`}>
-              {s.label}
-              <span className={`text-[10px] font-normal ${server === s.key ? 'text-red-200' : 'text-gray-600'}`}>
-                {s.hint}
-              </span>
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-1.5 bg-white/[0.04] border border-white/10 px-3 py-1.5 rounded-lg">
-          <span className="text-sm">🔊</span>
-          <span className="text-[11px] text-gray-400">Audio/Captions: player ke</span>
-          <span className="text-[11px] text-white font-bold">⚙️ icon</span>
-          <span className="text-[11px] text-gray-400">se change karo</span>
-        </div>
+      {/* Audio / Language selector */}
+      <div className="max-w-6xl mx-auto px-4 pt-3 pb-1 flex items-center gap-2 flex-wrap">
+        <span className="text-gray-500 text-xs font-medium flex items-center gap-1">🔊 Audio:</span>
+        {SERVERS.map((s) => (
+          <button key={s.key} onClick={() => setServer(s.key)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border
+              ${server === s.key
+                ? 'bg-red-600 border-red-500 text-white shadow-[0_0_10px_rgba(229,9,20,0.3)]'
+                : 'bg-white/5 border-white/8 text-gray-400 hover:text-white hover:bg-white/10'}`}>
+            <span>{s.flag}</span>
+            <span>{s.label}</span>
+            <span className={`text-[10px] font-normal ${server === s.key ? 'text-red-200' : 'text-gray-600'}`}>
+              {s.lang}
+            </span>
+          </button>
+        ))}
       </div>
 
       {/* Player */}
