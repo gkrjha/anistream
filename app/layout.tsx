@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/Navbar';
+import Script from 'next/script';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -13,7 +14,6 @@ export const metadata: Metadata = {
   title: 'AniStream — Watch Anime, Movies & Series Free',
   description: 'Stream thousands of anime, movies and web series in HD. Free, no ads, no signup.',
   manifest: '/manifest.json',
-  themeColor: '#e50914',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -28,6 +28,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={inter.variable}>
+      <head>
+        <meta name="theme-color" content="#e50914" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+      </head>
       <body className="bg-[#06060f] text-gray-100 font-[var(--font-inter)] antialiased">
         <Navbar />
         <main className="pt-[68px]">{children}</main>
@@ -60,6 +65,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
           </div>
         </footer>
+        <Script id="sw-register" strategy="afterInteractive">{`
+          if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+              navigator.serviceWorker.register('/sw.js');
+            });
+          }
+        `}</Script>
       </body>
     </html>
   );
