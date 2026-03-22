@@ -122,13 +122,24 @@ export default function Modal({ item, onClose }: Props) {
 
           {/* CTA */}
           <Link href={item.watchUrl} onClick={onClose}
-            className="flex items-center justify-center gap-3 w-full bg-red-600 hover:bg-red-500
-              text-white font-black py-4 rounded-2xl transition-all duration-200 text-sm
-              hover:shadow-[0_0_30px_rgba(229,9,20,0.5)] hover:-translate-y-0.5 active:translate-y-0">
-            <span className="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center">
-              <span className="text-xs ml-0.5">▶</span>
+            className="group relative flex items-center justify-center gap-3 w-full
+              bg-gradient-to-r from-red-600 to-red-500
+              text-white font-black py-3.5 rounded-2xl transition-all duration-300 text-sm
+              hover:from-red-500 hover:to-red-400
+              hover:shadow-[0_8px_32px_rgba(229,9,20,0.5)] hover:-translate-y-0.5 active:translate-y-0
+              overflow-hidden">
+            {/* shimmer */}
+            <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full
+              bg-gradient-to-r from-transparent via-white/10 to-transparent
+              transition-transform duration-700 ease-in-out" />
+            <span className="relative flex items-center gap-2.5">
+              <span className="w-6 h-6 bg-white/25 rounded-full flex items-center justify-center shrink-0">
+                <svg width="10" height="11" viewBox="0 0 10 11" fill="white">
+                  <path d="M1 1.5L9 5.5L1 9.5V1.5Z"/>
+                </svg>
+              </span>
+              Watch Now
             </span>
-            Watch Now
           </Link>
         </div>
       </div>
