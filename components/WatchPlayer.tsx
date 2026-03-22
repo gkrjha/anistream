@@ -18,59 +18,8 @@ interface Props {
   totalSeasons?: number;
 }
 
-type ServerKey = 'vidnest' | 'vidsrc_en' | 'vidsrc_hi' | 'multiembed' | 'vidlink';
-
-interface ServerOption {
-  key: ServerKey;
-  label: string;
-  flag: string;
-  lang: string;
-  movieUrl: (id: number) => string;
-  tvUrl: (id: number, s: number, e: number) => string;
-}
-
-const SERVERS: ServerOption[] = [
-  {
-    key: 'vidnest',
-    label: 'Server 1',
-    flag: '🌐',
-    lang: 'Default',
-    movieUrl: (id) => `https://vidnest.fun/movie/${id}`,
-    tvUrl: (id, s, e) => `https://vidnest.fun/tv/${id}/${s}/${e}`,
-  },
-  {
-    key: 'vidsrc_en',
-    label: 'Server 2',
-    flag: '▶',
-    lang: 'VidSrc',
-    movieUrl: (id) => `https://vidsrc.to/embed/movie/${id}`,
-    tvUrl: (id, s, e) => `https://vidsrc.to/embed/tv/${id}/${s}/${e}`,
-  },
-  {
-    key: 'vidsrc_hi',
-    label: 'Server 3',
-    flag: '▶',
-    lang: 'VidSrc2',
-    movieUrl: (id) => `https://vidsrc.cc/v2/embed/movie/${id}`,
-    tvUrl: (id, s, e) => `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}`,
-  },
-  {
-    key: 'multiembed',
-    label: 'Server 4',
-    flag: '🎵',
-    lang: 'Multi-audio',
-    movieUrl: (id) => `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1`,
-    tvUrl: (id, s, e) => `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1&s=${s}&e=${e}`,
-  },
-  {
-    key: 'vidlink',
-    label: 'Server 5',
-    flag: '🔊',
-    lang: 'VidLink',
-    movieUrl: (id) => `https://vidlink.pro/movie/${id}?multiLang=true`,
-    tvUrl: (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}?multiLang=true`,
-  },
-];
+function movieUrl(id: number) { return `https://vidnest.fun/movie/${id}`; }
+function tvUrl(id: number, s: number, e: number) { return `https://vidnest.fun/tv/${id}/${s}/${e}`; }
 
 const SERIES_EP_DURATION = 2700;
 const NEXT_TRIGGER_AT = SERIES_EP_DURATION - 90;
@@ -85,7 +34,6 @@ export default function WatchPlayer({
 
   const [season, setSeason] = useState(resumeSeason);
   const [episode, setEpisode] = useState(resumeEp);
-  const [server, setServer] = useState<ServerKey>('multiembed');
   const [iframeKey, setIframeKey] = useState(0);
   const [autoNext, setAutoNext] = useState(true);
   const [showNextCard, setShowNextCard] = useState(false);
@@ -95,10 +43,9 @@ export default function WatchPlayer({
   const wallRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wallTime = useRef(0);
 
-  const activeServer = SERVERS.find((s) => s.key === server) ?? SERVERS[0];
   const currentEmbed = type === 'series'
-    ? activeServer.tvUrl(tmdbId, season, episode)
-    : activeServer.movieUrl(tmdbId);
+    ? tvUrl(tmdbId, season, episode)
+    : movieUrl(tmdbId);
 
   const stopCountdown = useCallback(() => {
     if (countdownRef.current) { clearInterval(countdownRef.current); countdownRef.current = null; }
@@ -198,26 +145,6 @@ export default function WatchPlayer({
         )}
       </div>
 
-      {/* Audio / Server selector */}
-      <div className="max-w-6xl mx-auto px-4 pt-3 pb-1 flex items-center gap-2 flex-wrap">
-        <span className="text-gray-500 text-xs font-medium">Server:</span>
-        {SERVERS.map((s) => (
-          <button key={s.key} onClick={() => setServer(s.key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border
-              ${server === s.key
-                ? 'bg-red-600 border-red-500 text-white shadow-[0_0_10px_rgba(229,9,20,0.3)]'
-                : 'bg-white/5 border-white/8 text-gray-400 hover:text-white hover:bg-white/10'}`}>
-            <span>{s.flag}</span>
-            <span>{s.label}</span>
-            <span className={`text-[10px] font-normal ${server === s.key ? 'text-red-200' : 'text-gray-600'}`}>
-              {s.lang}
-            </span>
-          </button>
-        ))}
-        <span className="text-[11px] text-gray-600 ml-1">
-          Hindi audio ke liye alag server try karo — availability movie pe depend karti hai
-        </span>
-      </div>
 
       {/* Player */}
       <div className="w-full bg-black mt-2">
