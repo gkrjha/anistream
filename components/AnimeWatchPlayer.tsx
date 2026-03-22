@@ -41,7 +41,6 @@ interface Props {
   rating: string;
   year: string;
   genres: string[];
-  aniflixId?: number | null;
   initialEp?: number;
   initialLang?: 'sub' | 'dub';
 }
@@ -51,10 +50,8 @@ const EP_DURATION_S = 1440; // 24 min
 const NEXT_TRIGGER_AT = EP_DURATION_S - 90; // 22:30 mark
 const NEXT_COUNTDOWN = 10;
 
-type Server = 'vidnest' | 'aniflix';
-
 export default function AnimeWatchPlayer({
-  title, image, anilistId, malId, totalEpisodes, synopsis, rating, year, genres, aniflixId,
+  title, image, anilistId, malId, totalEpisodes, synopsis, rating, year, genres,
   initialEp = 1, initialLang = 'sub',
 }: Props) {
   const epCount = Math.max(totalEpisodes || 1, 1);
@@ -65,8 +62,8 @@ export default function AnimeWatchPlayer({
   const [visibleEps, setVisibleEps] = useState(Math.min(Math.max(initialEp + 20, 100), epCount));
   const [episode, setEpisode] = useState(Math.min(initialEp, epCount));
   const [lang, setLang] = useState<'sub' | 'dub'>(initialLang);
+  const [server, setServer] = useState<'vidnest' | 'animepahe'>('vidnest');
   const [autoNext, setAutoNext] = useState(true);
-  const [server, setServer] = useState<Server>('vidnest');
   const [showNextCard, setShowNextCard] = useState(false);
   const [countdown, setCountdown] = useState(NEXT_COUNTDOWN);
   const [epTitles, setEpTitles] = useState<Record<number, string>>({});
@@ -94,9 +91,11 @@ export default function AnimeWatchPlayer({
   const wallTime = useRef(0);
 
   const embedUrl = (() => {
-    if (server === 'aniflix' && aniflixId) return `https://aniflix.uno/player/${aniflixId}/?ep=${episode}`;
-    if (anilistId) return `https://vidnest.fun/anime/${anilistId}/${episode}/${lang}`;
-    return null;
+    if (!anilistId) return null;
+    const base = server === 'animepahe'
+      ? `https://vidnest.fun/animepahe/${anilistId}/${episode}/${lang}`
+      : `https://vidnest.fun/anime/${anilistId}/${episode}/${lang}`;
+    return base;
   })();  const stopCountdown = useCallback(() => {
     if (countdownRef.current) { clearInterval(countdownRef.current); countdownRef.current = null; }
   }, []);
@@ -329,39 +328,33 @@ export default function AnimeWatchPlayer({
 
               {/* Right — Sub/Dub + Server */}
               <div className="flex items-center gap-2 flex-wrap">
-                {server === 'vidnest' && (
-                  <div className="flex items-center bg-white/[0.05] rounded-xl p-1 border border-white/[0.07]">
-                    {(['sub', 'dub'] as const).map((l) => (
-                      <button key={l} onClick={() => setLang(l)}
-                        className={`px-4 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all duration-200
-                          ${lang === l
-                            ? 'bg-gradient-to-br from-red-500 to-red-700 text-white shadow-[0_2px_12px_rgba(229,9,20,0.4)]'
-                            : 'text-gray-500 hover:text-gray-300'}`}>
-                        {l}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <div className="flex items-center bg-white/[0.05] rounded-xl p-1 border border-white/[0.07]">
+                  {(['sub', 'dub'] as const).map((l) => (
+                    <button key={l} onClick={() => setLang(l)}
+                      className={`px-4 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all duration-200
+                        ${lang === l
+                          ? 'bg-gradient-to-br from-red-500 to-red-700 text-white shadow-[0_2px_12px_rgba(229,9,20,0.4)]'
+                          : 'text-gray-500 hover:text-gray-300'}`}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
 
                 <div className="flex items-center bg-white/[0.05] rounded-xl p-1 border border-white/[0.07]">
-                  <button onClick={() => setServer('vidnest')}
-                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[11px] font-black transition-all duration-200
-                      ${server === 'vidnest'
-                        ? 'bg-gradient-to-br from-violet-500 to-purple-700 text-white shadow-[0_2px_12px_rgba(139,92,246,0.4)]'
-                        : 'text-gray-500 hover:text-gray-300'}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${server === 'vidnest' ? 'bg-white' : 'bg-gray-600'}`} />
-                    VidNest
-                  </button>
-                  {aniflixId && (
-                    <button onClick={() => setServer('aniflix')}
+                  {([
+                    { key: 'vidnest', label: 'VidNest', from: 'from-violet-500', to: 'to-purple-700', glow: 'rgba(139,92,246,0.4)' },
+                    { key: 'animepahe', label: 'AnimePahe', from: 'from-pink-500', to: 'to-rose-700', glow: 'rgba(236,72,153,0.4)' },
+                  ] as const).map((s) => (
+                    <button key={s.key} onClick={() => setServer(s.key)}
                       className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[11px] font-black transition-all duration-200
-                        ${server === 'aniflix'
-                          ? 'bg-gradient-to-br from-orange-500 to-orange-700 text-white shadow-[0_2px_12px_rgba(249,115,22,0.4)]'
+                        ${server === s.key
+                          ? `bg-gradient-to-br ${s.from} ${s.to} text-white shadow-[0_2px_12px_${s.glow}]`
                           : 'text-gray-500 hover:text-gray-300'}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${server === 'aniflix' ? 'bg-white' : 'bg-gray-600'}`} />
-                      Aniflix
+                      <span className={`w-1.5 h-1.5 rounded-full ${server === s.key ? 'bg-white' : 'bg-gray-600'}`} />
+                      {s.label}
                     </button>
-                  )}                </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

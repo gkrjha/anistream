@@ -1,4 +1,4 @@
-import { getAnimeById, getAniflixId } from '@/lib/api';
+import { getAnimeById } from '@/lib/api';
 import AnimeWatchPlayer from '@/components/AnimeWatchPlayer';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
@@ -31,10 +31,6 @@ export default async function AnimeWatchPage({ params, searchParams }: Props) {
   const anime = await getAnimeById(malId);
   if (!anime) return notFound();
 
-  const aniflixId = anime.anilistId
-    ? await getAniflixId(anime.anilistId, anime.title)
-    : null;
-
   return (
     <Suspense fallback={<div className="min-h-screen bg-[#06060f]" />}>
       <AnimeWatchPlayer
@@ -47,7 +43,6 @@ export default async function AnimeWatchPage({ params, searchParams }: Props) {
         rating={anime.rating}
         year={anime.year}
         genres={anime.genres}
-        aniflixId={aniflixId}
         initialEp={Number(ep ?? 1) || 1}
         initialLang={(lang === 'dub' ? 'dub' : 'sub') as 'sub' | 'dub'}
       />
