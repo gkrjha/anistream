@@ -50,7 +50,19 @@ export default function HLSPlayer({ episode, lang, title, onEnded }: Props) {
           hls.loadSource(url);
           hls.attachMedia(video);
           hls.on(Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); setLoading(false); });
-          hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) setError('Stream error — try another server'); });
+          hls.on(Hls.Events.ERROR, (_, d) => {
+            if (d.fatal) {
+              setError('Stream encrypted — not playable. Switch to VidNest.');
+              setLoading(false);
+            }
+          });
+          // Timeout fallback — if manifest never loads
+          setTimeout(() => {
+            setLoading((prev) => {
+              if (prev) setError('Stream timed out — encrypted source. Switch to VidNest.');
+              return false;
+            });
+          }, 12000);
           hlsRef.current = hls;
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
           video.src = url;

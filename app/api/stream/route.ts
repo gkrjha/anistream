@@ -42,7 +42,7 @@ async function getEpisodeId(slug: string, epNum: number): Promise<string | null>
 
 async function getSources(episodeId: string, lang: string) {
   const category = lang === 'dub' ? 'dub' : 'sub';
-  for (const server of ['hd-1', 'hd-2']) {
+  for (const server of ['hd-2', 'hd-1']) {
     try {
       const res = await aw(
         `${ANIWATCH}/api/v2/hianime/episode/sources?animeEpisodeId=${encodeURIComponent(episodeId)}&server=${server}&category=${category}`

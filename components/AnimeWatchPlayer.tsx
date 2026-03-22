@@ -1,7 +1,5 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import dynamic from 'next/dynamic';
-const HLSPlayer = dynamic(() => import('./HLSPlayer'), { ssr: false });
 import Link from 'next/link';
 import { useRouter as useNextRouter, usePathname } from 'next/navigation';
 import { saveProgress } from '@/lib/history';
@@ -53,7 +51,7 @@ const EP_DURATION_S = 1440; // 24 min
 const NEXT_TRIGGER_AT = EP_DURATION_S - 90; // 22:30 mark
 const NEXT_COUNTDOWN = 10;
 
-type Server = 'vidnest' | 'aniflix' | 'hls';
+type Server = 'vidnest' | 'aniflix';
 
 export default function AnimeWatchPlayer({
   title, image, anilistId, malId, totalEpisodes, synopsis, rating, year, genres, aniflixId,
@@ -233,14 +231,7 @@ export default function AnimeWatchPlayer({
           {/* Player */}
           <div className="w-full bg-black xl:rounded-xl overflow-hidden">
             <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
-              {server === 'hls' && anilistId ? (
-                <HLSPlayer
-                  episode={episode}
-                  lang={lang}
-                  title={title}
-                  onEnded={() => triggerNextCard()}
-                />
-              ) : embedUrl ? (
+              {embedUrl ? (
                 <>
                   <iframe
                     key={`${iframeKey}-${server}-${anilistId}-${episode}-${lang}`}
@@ -369,16 +360,6 @@ export default function AnimeWatchPlayer({
                           : 'text-gray-500 hover:text-gray-300'}`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${server === 'aniflix' ? 'bg-white' : 'bg-gray-600'}`} />
                       Aniflix
-                    </button>
-                  )}
-                  {anilistId && (
-                    <button onClick={() => setServer('hls')}
-                      className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[11px] font-black transition-all duration-200
-                        ${server === 'hls'
-                          ? 'bg-gradient-to-br from-green-500 to-emerald-700 text-white shadow-[0_2px_12px_rgba(16,185,129,0.4)]'
-                          : 'text-gray-500 hover:text-gray-300'}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${server === 'hls' ? 'bg-white animate-pulse' : 'bg-gray-600'}`} />
-                      ✦ Ad-Free
                     </button>
                   )}                </div>
               </div>
