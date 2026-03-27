@@ -4,7 +4,17 @@ import { cached } from './redis';
 const ANILIST_URL = 'https://graphql.anilist.co';
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 export const TMDB_IMG = 'https://image.tmdb.org/t/p/w500';
-const TMDB_KEY = process.env.NEXT_PUBLIC_TMDB_KEY || '8265bd1679663a7ea12ac168da84d2e8';
+// Hardcoded keys as fallbacks
+const TMDB_KEYS = [
+  process.env.NEXT_PUBLIC_TMDB_KEY,
+  process.env.TMDB_KEY,
+  '8265bd1679663a7ea12ac168da84d2e8', // User key
+  '04c35731a5ee918f014970082a0088b1', // Common key 1
+  '40c5415712166946006e885f95874258'  // Common key 2
+].filter(Boolean) as string[];
+
+let currentKeyIndex = 0;
+let TMDB_KEY = TMDB_KEYS[0];
 
 // ── Embed URL builders ────────────────────────────────────────
 export function getMovieEmbedUrl(tmdbId: number) {
@@ -112,12 +122,31 @@ export function parseSeries(s: TMDBSeries): MediaItem {
 
 // ── TMDB helper ───────────────────────────────────────────────
 async function tmdb<T>(path: string): Promise<T | null> {
-  try {
-    const sep = path.includes('?') ? '&' : '?';
-    const res = await fetch(`${TMDB_BASE}${path}${sep}api_key=${TMDB_KEY}`, { next: { revalidate: 3600 } });
-    if (!res.ok) return null;
-    return res.json();
-  } catch { return null; }
+  const tryFetch = async (key: string): Promise<T | null> => {
+    try {
+      const sep = path.includes('?') ? '&' : '?';
+      const res = await fetch(`${TMDB_BASE}${path}${sep}api_key=${key}`, { next: { revalidate: 3600 } });
+      if (res.ok) return res.json();
+      if (res.status === 401 || res.status === 403) {
+        console.error(`TMDB Key ${key.slice(0, 5)}... is invalid or expired.`);
+      }
+      return null;
+    } catch (err) {
+      console.error('TMDB Fetch Exception:', err);
+      return null;
+    }
+  };
+
+  // Try each key until one works
+  for (let i = 0; i < TMDB_KEYS.length; i++) {
+    const result = await tryFetch(TMDB_KEYS[i]);
+    if (result) {
+      TMDB_KEY = TMDB_KEYS[i]; // Update the key for future calls
+      return result;
+    }
+  }
+
+  return null;
 }
 
 // ── AniList fragment (reused in all queries) ──────────────────
