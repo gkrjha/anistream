@@ -15,17 +15,14 @@ const SORTS = [
   { value: 'vote_average.desc', label: 'Top Rated' },
   { value: 'first_air_date.desc', label: 'Latest' },
 ];
-const LANGUAGES = [
-  { value: '', label: 'All Languages' },
-  { value: 'hi', label: '🇮🇳 Hindi' },
-  { value: 'en', label: '🇺🇸 English' },
-  { value: 'ko', label: '🇰🇷 Korean' },
-  { value: 'ja', label: '🇯🇵 Japanese' },
-  { value: 'zh', label: '🇨🇳 Chinese' },
-  { value: 'es', label: '🇪🇸 Spanish' },
-  { value: 'fr', label: '🇫🇷 French' },
-  { value: 'ta', label: '🇮🇳 Tamil' },
-  { value: 'te', label: '🇮🇳 Telugu' },
+const INDUSTRY_TABS = [
+  { label: 'All', lang: '' },
+  { label: '🎬 Hollywood', lang: 'en' },
+  { label: '🇮🇳 Bollywood', lang: 'hi' },
+  { label: '🇰🇷 K-Drama', lang: 'ko' },
+  { label: '🇯🇵 Japanese', lang: 'ja' },
+  { label: '🇮🇳 Tamil', lang: 'ta' },
+  { label: '🇮🇳 Telugu', lang: 'te' },
 ];
 
 export default function WebSeriesPageClient() {
@@ -57,13 +54,25 @@ export default function WebSeriesPageClient() {
 
   return (
     <div className="max-w-[1400px] mx-auto px-6 py-6">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
         <h1 className="text-3xl font-black text-white">📺 Web Series</h1>
         <div className="flex gap-3 flex-wrap">
-          <Select options={LANGUAGES} value={language} onChange={(v) => applyFilter(setLanguage, v)} />
           <Select options={GENRES} value={genre} onChange={(v) => applyFilter(setGenre, v)} />
           <Select options={SORTS} value={sort} onChange={(v) => applyFilter(setSort, v)} />
         </div>
+      </div>
+
+      {/* Industry tabs */}
+      <div className="flex gap-2 flex-wrap mb-6">
+        {INDUSTRY_TABS.map((tab) => (
+          <button key={tab.lang} onClick={() => applyFilter(setLanguage, tab.lang)}
+            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 border
+              ${language === tab.lang
+                ? 'bg-red-600 border-red-500 text-white shadow-[0_0_16px_rgba(229,9,20,0.35)]'
+                : 'bg-white/[0.05] border-white/[0.08] text-gray-400 hover:text-white hover:bg-white/[0.1]'}`}>
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {loading ? <GridSkeleton /> : <MediaGrid items={items} emptyMsg="Add TMDB API key in .env.local to load series." />}

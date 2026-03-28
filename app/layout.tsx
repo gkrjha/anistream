@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import Logo from '@/components/Logo';
+import BackToTop from '@/components/BackToTop';
 import Script from 'next/script';
 // import { Analytics } from '@vercel/analytics/next'; // run: npm i @vercel/analytics
 
@@ -67,6 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-[#06060f] text-gray-100 font-[var(--font-inter)] antialiased">
         <Navbar />
         <main className="pt-[68px]">{children}</main>
+        <BackToTop />
 
         <Script id="adblock-script" strategy="beforeInteractive">
           {`

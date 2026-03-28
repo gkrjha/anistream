@@ -2,11 +2,26 @@
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getHistory, removeEntry, WatchEntry } from '@/lib/history';
-import { Play, X, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { getHistory, removeEntry, clearHistory, WatchEntry } from '@/lib/history';
+import { Play, X, ChevronLeft, ChevronRight, Clock, Trash2 } from 'lucide-react';
+
+function timeAgo(ts: number): string {
+  const diff = Math.floor((Date.now() - ts) / 1000);
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
+const TYPE_STYLES: Record<string, string> = {
+  anime: 'bg-violet-600/80 text-violet-100',
+  movie: 'bg-sky-600/80 text-sky-100',
+  series: 'bg-emerald-600/80 text-emerald-100',
+};
 
 export default function ContinueWatching() {
   const [items, setItems] = useState<WatchEntry[]>([]);
+  const [confirmClear, setConfirmClear] = useState(false);
   const rowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -19,10 +34,16 @@ export default function ContinueWatching() {
   if (items.length === 0) return null;
 
   function remove(id: string, e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); e.stopPropagation();
     removeEntry(id);
     setItems(getHistory());
+  }
+
+  function handleClearAll() {
+    if (!confirmClear) { setConfirmClear(true); setTimeout(() => setConfirmClear(false), 3000); return; }
+    clearHistory();
+    setItems([]);
+    setConfirmClear(false);
   }
 
   function scroll(dir: 'left' | 'right') {
@@ -30,13 +51,15 @@ export default function ContinueWatching() {
   }
 
   function resumeUrl(item: WatchEntry): string {
-    if (item.type === 'anime') {
-      return `${item.watchUrl}?ep=${item.episode ?? 1}&lang=${item.lang ?? 'sub'}`;
-    }
-    if (item.type === 'series') {
-      return `${item.watchUrl}?season=${item.season ?? 1}&ep=${item.episode ?? 1}`;
-    }
+    if (item.type === 'anime') return `${item.watchUrl}?ep=${item.episode ?? 1}&lang=${item.lang ?? 'sub'}`;
+    if (item.type === 'series') return `${item.watchUrl}?season=${item.season ?? 1}&ep=${item.episode ?? 1}`;
     return item.watchUrl;
+  }
+
+  function progressPct(item: WatchEntry): number {
+    if (item.type === 'anime' && item.totalEpisodes && item.episode)
+      return Math.min((item.episode / item.totalEpisodes) * 100, 100);
+    return 0;
   }
 
   return (
@@ -50,8 +73,21 @@ export default function ContinueWatching() {
           <h2 className="text-lg sm:text-xl font-black text-white flex items-center gap-2.5">
             <Clock size={18} className="text-red-400" /> Continue Watching
           </h2>
+          <span className="text-xs text-gray-600 bg-white/[0.05] border border-white/[0.07]
+            px-2 py-0.5 rounded-full font-medium">{items.length}</span>
         </div>
+
         <div className="flex items-center gap-2">
+          {/* Clear all */}
+          <button onClick={handleClearAll}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold
+              border transition-all duration-200
+              ${confirmClear
+                ? 'bg-red-600 border-red-500 text-white shadow-[0_0_12px_rgba(229,9,20,0.4)]'
+                : 'bg-white/[0.04] border-white/[0.08] text-gray-500 hover:text-red-400 hover:border-red-500/40'}`}>
+            <Trash2 size={12} />
+            {confirmClear ? 'Confirm?' : 'Clear All'}
+          </button>
           <button onClick={() => scroll('left')}
             className="w-9 h-9 rounded-full bg-white/8 border border-white/12 text-white
               hover:bg-red-600 hover:border-red-500 flex items-center justify-center
@@ -88,6 +124,7 @@ export default function ContinueWatching() {
 
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
+                  {/* Play overlay */}
                   <div className="absolute inset-0 flex items-center justify-center
                     opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center
@@ -96,6 +133,23 @@ export default function ContinueWatching() {
                     </div>
                   </div>
 
+                  {/* Type badge */}
+                  <div className="absolute top-2 left-2">
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full backdrop-blur-sm
+                      ${TYPE_STYLES[item.type] ?? 'bg-gray-600/80 text-gray-100'}`}>
+                      {item.type}
+                    </span>
+                  </div>
+
+                  {/* Remove button — always visible */}
+                  <button onClick={(e) => remove(item.id, e)}
+                    className="absolute top-2 right-2 w-6 h-6 bg-black/70 hover:bg-red-600
+                      text-white rounded-full flex items-center justify-center
+                      transition-all border border-white/10 hover:border-red-500 z-10">
+                    <X size={10} />
+                  </button>
+
+                  {/* Episode info pill */}
                   {item.type !== 'movie' && (
                     <div className="absolute bottom-2 left-2 right-2">
                       <div className="bg-black/80 backdrop-blur-sm rounded-lg px-2 py-1.5 text-center">
@@ -111,25 +165,18 @@ export default function ContinueWatching() {
                     </div>
                   )}
 
-                  {item.type === 'anime' && item.totalEpisodes && item.episode && (
+                  {/* Progress bar */}
+                  {progressPct(item) > 0 && (
                     <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/10">
-                      <div className="h-full bg-red-500 rounded-full"
-                        style={{ width: `${Math.min((item.episode / item.totalEpisodes) * 100, 100)}%` }} />
+                      <div className="h-full bg-red-500 rounded-full transition-all"
+                        style={{ width: `${progressPct(item)}%` }} />
                     </div>
                   )}
-
-                  <button onClick={(e) => remove(item.id, e)}
-                    className="absolute top-2 right-2 w-6 h-6 bg-black/70 hover:bg-red-600
-                      text-white rounded-full flex items-center justify-center
-                      opacity-0 group-hover:opacity-100 transition-all border border-white/10
-                      hover:border-red-500 z-10">
-                    <X size={10} />
-                  </button>
                 </div>
 
                 <div className="p-2.5">
                   <p className="text-white text-[11px] font-bold truncate">{item.title}</p>
-                  <p className="text-gray-600 text-[10px] mt-0.5 capitalize">{item.type}</p>
+                  <p className="text-gray-600 text-[10px] mt-0.5">{timeAgo(item.updatedAt)}</p>
                 </div>
               </div>
             </Link>
@@ -139,5 +186,3 @@ export default function ContinueWatching() {
     </section>
   );
 }
-
-
