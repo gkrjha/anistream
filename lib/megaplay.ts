@@ -5,6 +5,9 @@ const BASE = 'https://megaplay.buzz';
 const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
 
+/** Keep under Vercel hobby's ~10s function budget (scrape + getSources). */
+const FETCH_MS = 7000;
+
 export interface SubtitleTrack {
   file: string;
   label: string;
@@ -35,12 +38,16 @@ interface ResolveOpts {
 }
 
 async function scrapeFileId(path: string): Promise<string | null> {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { Referer: BASE, 'User-Agent': UA },
-    signal: AbortSignal.timeout(12000),
-  });
-  if (!res.ok) return null;
-  return (await res.text()).match(/data-id="(\d+)"/)?.[1] ?? null;
+  try {
+    const res = await fetch(`${BASE}${path}`, {
+      headers: { Referer: BASE, 'User-Agent': UA },
+      signal: AbortSignal.timeout(FETCH_MS),
+    });
+    if (!res.ok) return null;
+    return (await res.text()).match(/data-id="(\d+)"/)?.[1] ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /** Cache wrapper so null (not found) is stored and re-served. */
@@ -53,46 +60,78 @@ async function cachedId(key: string, fn: () => Promise<string | null>): Promise<
   return wrapped.id;
 }
 
+/**
+ * Race AniList + MAL lookups — first hit wins. Avoids serial 7s+7s stalls
+ * when one ID is missing on MegaPlay (common on Vercel’s short timeouts).
+ */
 async function resolveFileId(opts: ResolveOpts): Promise<string | null> {
   const { anilistId, malId, episode, lang } = opts;
+  const tasks: Promise<string | null>[] = [];
 
   if (anilistId && anilistId > 0) {
-    const id = await cachedId(
-      `megaplay:ani:${anilistId}:${episode}:${lang}`,
-      () => scrapeFileId(`/stream/ani/${anilistId}/${episode}/${lang}`)
+    tasks.push(
+      cachedId(`megaplay:ani:${anilistId}:${episode}:${lang}`, () =>
+        scrapeFileId(`/stream/ani/${anilistId}/${episode}/${lang}`)
+      )
     );
-    if (id) return id;
   }
 
   if (malId && malId > 0) {
-    return cachedId(
-      `megaplay:mal:${malId}:${episode}:${lang}`,
-      () => scrapeFileId(`/stream/mal/${malId}/${episode}/${lang}`)
+    tasks.push(
+      cachedId(`megaplay:mal:${malId}:${episode}:${lang}`, () =>
+        scrapeFileId(`/stream/mal/${malId}/${episode}/${lang}`)
+      )
     );
   }
 
-  return null;
+  if (!tasks.length) return null;
+
+  return new Promise((resolve) => {
+    let pending = tasks.length;
+    let settled = false;
+
+    for (const task of tasks) {
+      task.then((id) => {
+        if (settled) return;
+        if (id) {
+          settled = true;
+          resolve(id);
+          return;
+        }
+        pending -= 1;
+        if (pending === 0) resolve(null);
+      }).catch(() => {
+        if (settled) return;
+        pending -= 1;
+        if (pending === 0) resolve(null);
+      });
+    }
+  });
 }
 
 async function fetchSources(fileId: string, lang: 'sub' | 'dub'): Promise<EpisodeSources | null> {
   // CDN URLs are short-lived — never cache getSources payloads
-  const res = await fetch(`${BASE}/stream/getSources?id=${fileId}&type=${lang}`, {
-    headers: { Referer: UPSTREAM_REFERER, 'X-Requested-With': 'XMLHttpRequest', 'User-Agent': UA },
-    signal: AbortSignal.timeout(12000),
-  });
-  if (!res.ok) return null;
+  try {
+    const res = await fetch(`${BASE}/stream/getSources?id=${fileId}&type=${lang}`, {
+      headers: { Referer: UPSTREAM_REFERER, 'X-Requested-With': 'XMLHttpRequest', 'User-Agent': UA },
+      signal: AbortSignal.timeout(FETCH_MS),
+    });
+    if (!res.ok) return null;
 
-  const data = (await res.json()) as RawSources;
-  const file = data?.sources?.file;
-  if (!file) return null;
+    const data = (await res.json()) as RawSources;
+    const file = data?.sources?.file;
+    if (!file) return null;
 
-  return {
-    file,
-    tracks: (data.tracks ?? []).filter((t) => t.kind === 'captions' && t.file),
-    intro: data.intro?.end ? data.intro : undefined,
-    outro: data.outro?.end ? data.outro : undefined,
-    usedLang: lang,
-  };
+    return {
+      file,
+      tracks: (data.tracks ?? []).filter((t) => t.kind === 'captions' && t.file),
+      intro: data.intro?.end ? data.intro : undefined,
+      outro: data.outro?.end ? data.outro : undefined,
+      usedLang: lang,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function getEpisodeSources(

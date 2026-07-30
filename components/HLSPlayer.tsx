@@ -182,7 +182,20 @@ export default function HLSPlayer({
 
       if (Hls.isSupported()) {
         if (cancelled || controller.signal.aborted) return;
-        const hls = new Hls({ enableWorker: true, startLevel: -1 });
+        const hls = new Hls({
+          enableWorker: true,
+          startLevel: -1,
+          // Proxy hop adds latency — keep a deeper buffer and prefetch
+          maxBufferLength: 45,
+          maxMaxBufferLength: 90,
+          maxBufferHole: 0.5,
+          startFragPrefetch: true,
+          fragLoadingTimeOut: 25000,
+          manifestLoadingTimeOut: 20000,
+          levelLoadingTimeOut: 20000,
+          fragLoadingMaxRetry: 6,
+          manifestLoadingMaxRetry: 4,
+        });
         hlsRef.current = hls;
         hls.loadSource(data.src);
         hls.attachMedia(video);

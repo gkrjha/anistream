@@ -3,6 +3,7 @@ import { getEpisodeSources } from '@/lib/megaplay';
 import { proxyUrl } from '@/lib/stream-proxy';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
 export async function GET(req: NextRequest) {
   const anilistIdRaw = req.nextUrl.searchParams.get('anilistId');
@@ -44,7 +45,9 @@ export async function GET(req: NextRequest) {
       usedLang: sources.usedLang,
       requestedLang: lang,
     });
-  } catch {
-    return NextResponse.json({ error: 'Failed to resolve stream' }, { status: 502 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to resolve stream';
+    console.error('[anime/sources]', message);
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 }

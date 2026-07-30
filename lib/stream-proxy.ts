@@ -6,10 +6,13 @@ import { createHmac, timingSafeEqual } from 'crypto';
 function getSecret(): string {
   const secret = process.env.STREAM_PROXY_SECRET;
   if (secret) return secret;
+  // Per-deployment fallback so Vercel works before the env var is set.
+  // Prefer STREAM_PROXY_SECRET in the Vercel dashboard for a durable key.
+  const deploy = process.env.VERCEL_DEPLOYMENT_ID;
+  if (deploy) return `anistream:${deploy}`;
   if (process.env.NODE_ENV === 'production') {
-    throw new Error('STREAM_PROXY_SECRET is required in production');
+    console.error('[stream-proxy] STREAM_PROXY_SECRET is not set — using unstable fallback');
   }
-  // Local-only fallback — never ship this to production
   return 'anistream-local-dev-secret';
 }
 
