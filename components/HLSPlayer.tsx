@@ -184,17 +184,22 @@ export default function HLSPlayer({
         if (cancelled || controller.signal.aborted) return;
         const hls = new Hls({
           enableWorker: true,
-          // Start at the lighter 720p rendition; ABR can upgrade after playback starts.
+          // Start at the lighter rendition; ABR can upgrade after playback starts.
           startLevel: 0,
-          // Proxy hop adds latency — keep a deeper buffer and prefetch
-          maxBufferLength: 45,
-          maxMaxBufferLength: 90,
+          // Fragments are ~10s each and every one goes through our proxy, so
+          // buffer far ahead and never pull a rendition larger than the player.
+          maxBufferLength: 90,
+          maxMaxBufferLength: 240,
+          maxBufferSize: 120 * 1000 * 1000,
+          backBufferLength: 30,
           maxBufferHole: 0.5,
+          capLevelToPlayerSize: true,
+          abrEwmaDefaultEstimate: 1_500_000,
           startFragPrefetch: true,
-          fragLoadingTimeOut: 15000,
+          fragLoadingTimeOut: 30000,
           manifestLoadingTimeOut: 12000,
           levelLoadingTimeOut: 12000,
-          fragLoadingMaxRetry: 3,
+          fragLoadingMaxRetry: 6,
           manifestLoadingMaxRetry: 2,
         });
         hlsRef.current = hls;
@@ -398,6 +403,11 @@ export default function HLSPlayer({
 
       <video ref={videoRef} className="w-full h-full"
         onPlay={() => setPlaying(true)}
+        onPlaying={() => {
+          setPlaying(true);
+          setLoading(false);
+          setBuffering(false);
+        }}
         onPause={() => setPlaying(false)}
         onLoadedMetadata={() => {
           const v = videoRef.current;
@@ -411,10 +421,25 @@ export default function HLSPlayer({
           if (v.buffered.length) {
             setBuffered(v.buffered.end(v.buffered.length - 1));
           }
+          // Some browsers omit `canplay` after a seek even though frames resume.
+          if (!v.paused && v.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+            setLoading(false);
+            setBuffering(false);
+          }
           onProgress?.(v.currentTime, v.duration || 0);
         }}
+        onSeeking={() => setBuffering(true)}
+        onSeeked={() => {
+          const v = videoRef.current;
+          if (v && v.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+            setBuffering(false);
+          }
+        }}
         onWaiting={() => setBuffering(true)}
-        onCanPlay={() => setBuffering(false)}
+        onCanPlay={() => {
+          setLoading(false);
+          setBuffering(false);
+        }}
         onEnded={onEnded}
         playsInline
         crossOrigin="anonymous"

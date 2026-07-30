@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.apple.mpegurl',
-        'Cache-Control': 'public, max-age=30, stale-while-revalidate=60',
+        'Cache-Control': 'public, max-age=30, s-maxage=300, stale-while-revalidate=600',
       },
     });
   }
@@ -62,7 +62,9 @@ export async function GET(req: NextRequest) {
 
   const responseHeaders = new Headers({
     'Content-Type': isVtt ? 'text/vtt; charset=utf-8' : contentType || 'application/octet-stream',
-    'Cache-Control': 'public, max-age=3600',
+    // Segment URLs are content-addressed, so let Vercel's CDN absorb repeats
+    // and seeks instead of paying the origin round trip again.
+    'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400',
   });
   if (acceptRanges) responseHeaders.set('Accept-Ranges', acceptRanges);
   else if (contentRange || upstream.status === 206) responseHeaders.set('Accept-Ranges', 'bytes');
