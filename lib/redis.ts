@@ -25,13 +25,12 @@ export async function cached<T>(
   if (redis) {
     try {
       const hit = await redis.get<unknown>(key);
+      // Upstash returns null on miss — wrap values so null payloads can be cached
       if (hit !== null && hit !== undefined) {
-        // Parse if string, return directly if already object
         const parsed = typeof hit === 'string' ? JSON.parse(hit) : hit;
         return parsed as T;
       }
       const data = await fn();
-      // Always store as JSON string for consistency
       await redis.set(key, JSON.stringify(data), { ex: ttlSeconds });
       return data;
     } catch {
@@ -39,9 +38,9 @@ export async function cached<T>(
     }
   }
 
-  // In-memory fallback
+  // In-memory fallback — undefined means miss (null is a valid cached value)
   const hit = cacheGet<T>(key);
-  if (hit !== null) return hit;
+  if (hit !== undefined) return hit;
   const data = await fn();
   cacheSet(key, data, ttlSeconds);
   return data;

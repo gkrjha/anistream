@@ -6,6 +6,7 @@ import Logo from '@/components/Logo';
 import BackToTop from '@/components/BackToTop';
 import Script from 'next/script';
 // import { Analytics } from '@vercel/analytics/next'; // run: npm i @vercel/analytics
+// Script still used for service-worker registration below
 
 const inter = Inter({
   subsets: ['latin'],
@@ -69,96 +70,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Navbar />
         <main className="pt-[68px]">{children}</main>
         <BackToTop />
-
-        <Script id="adblock-script" strategy="beforeInteractive">
-          {`
-            (function() {
-              // 1. Extreme window.open block (Proxy + DefineProperty)
-              const noop = () => { 
-                console.log('AniStream: Blocked a popup attempt'); 
-                try { window.stop(); } catch(e) {}
-                return { focus: () => {}, close: () => {}, location: { href: "" } }; 
-              };
-
-              // Use Proxy to make window.open un-bypassable
-              window.open = new Proxy(window.open, {
-                apply: (target, thisArg, argArray) => {
-                  console.log('AniStream: Proxy blocked window.open');
-                  try { window.stop(); } catch(e) {}
-                  return noop();
-                }
-              });
-
-              const hardFreeze = (obj) => {
-                try {
-                  Object.defineProperty(obj, 'open', { value: noop, writable: false, configurable: false });
-                } catch (e) {
-                  try { obj.open = noop; } catch(err) {}
-                }
-              };
-              hardFreeze(window);
-              if (window.top) hardFreeze(window.top);
-              if (window.parent) hardFreeze(window.parent);
-
-              // 2. Block top-level navigation/redirects
-              window.addEventListener('beforeunload', (e) => {
-                if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
-                    console.log('AniStream: Blocked an iframe-initiated redirect');
-                    try { window.stop(); } catch(err) {}
-                }
-              }, true);
-
-              // 3. Global Event Interceptor (Capture Phase)
-              const adTriggers = ['mousedown', 'mouseup', 'click', 'touchstart', 'touchend'];
-              adTriggers.forEach(type => {
-                document.addEventListener(type, (e) => {
-                  const target = e.target.closest('a');
-                  if (target) {
-                    const href = (target.href || '').toLowerCase();
-                    const isExternal = href && !href.includes(window.location.hostname) && !href.startsWith('/') && !href.startsWith('#');
-                    if (target.target === '_blank' || isExternal) {
-                      e.preventDefault();
-                      e.stopImmediatePropagation();
-                      console.log('AniStream: Blocked external ad trigger');
-                      return false;
-                    }
-                  }
-                }, true);
-              });
-
-              // 4. Ad-Content Cleanup
-              const adKeywords = ['pop', 'ads', 'click', 'syndication', 'qxbroker', 'quotex', 'slim', 'pelotas', 'trading', 'slimypelotas', 'track'];
-              const observer = new MutationObserver((mutations) => {
-                mutations.forEach((mutation) => {
-                  mutation.addedNodes.forEach((node) => {
-                    if (node.nodeType === 1) {
-                      const src = (node.src || node.href || '').toLowerCase();
-                      const id = (node.id || '').toLowerCase();
-                      const cls = (node.className || '').toString().toLowerCase();
-                      
-                      if (adKeywords.some(kw => src.includes(kw) || id.includes(kw) || cls.includes(kw))) {
-                        node.remove();
-                      }
-                      if (node.tagName === 'IFRAME' && src && !src.includes('vidnest') && !src.includes('animepahe') && !src.includes('vidsrc') && !src.includes(window.location.hostname)) {
-                        node.remove();
-                      }
-                    }
-                  });
-                });
-              });
-              observer.observe(document.documentElement, { childList: true, subtree: true });
-
-              // 5. Force links to stay in-app
-              setInterval(() => {
-                document.querySelectorAll('a').forEach(a => {
-                  if (a.target === '_blank') a.target = '_self';
-                });
-              }, 500);
-
-              window.alert = window.confirm = window.prompt = () => true;
-            })();
-          `}
-        </Script>
 
         <footer className="mt-20 border-t border-white/[0.05]">
           {/* Anime Characters Banner */}

@@ -16,6 +16,7 @@ export interface WatchEntry {
   season?: number;
   // Shared
   lang?: 'sub' | 'dub';
+  currentTime?: number;    // seconds into the episode
   updatedAt: number;       // Date.now()
 }
 

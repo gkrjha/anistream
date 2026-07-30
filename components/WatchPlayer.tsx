@@ -24,6 +24,8 @@ function tvUrl(id: number, s: number, e: number) { return `https://vidnest.fun/t
 const SERIES_EP_DURATION = 2700;
 const NEXT_TRIGGER_AT = SERIES_EP_DURATION - 90;
 const NEXT_COUNTDOWN = 10;
+const EMBED_ORIGIN = 'https://vidnest.fun';
+const EMBED_SANDBOX = 'allow-scripts allow-same-origin allow-presentation';
 
 export default function WatchPlayer({
   title, image, embedUrl: _embedUrl, type, tmdbId, synopsis, rating, year, genres, totalSeasons = 1,
@@ -42,6 +44,7 @@ export default function WatchPlayer({
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wallRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wallTime = useRef(0);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const currentEmbed = type === 'series'
     ? tvUrl(tmdbId, season, episode)
@@ -82,6 +85,7 @@ export default function WatchPlayer({
 
   useEffect(() => {
     function handleMessage(e: MessageEvent) {
+      if (e.origin !== EMBED_ORIGIN || e.source !== iframeRef.current?.contentWindow) return;
       try {
         const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
         if (d?.event === 'ended' || d?.type === 'ended' || d?.action === 'ended') triggerNextCard();
@@ -150,9 +154,11 @@ export default function WatchPlayer({
       <div className="w-full bg-black mt-2">
         <div className="relative w-full max-w-6xl mx-auto" style={{ aspectRatio: '16/9' }}>
           <iframe key={`${iframeKey}-${currentEmbed}`} src={currentEmbed}
+            ref={iframeRef}
             className="absolute inset-0 w-full h-full"
             allowFullScreen allow="autoplay; fullscreen; picture-in-picture"
-            referrerPolicy="origin" onLoad={onIframeLoad} />
+            sandbox={EMBED_SANDBOX}
+            referrerPolicy="no-referrer" onLoad={onIframeLoad} />
 
           {/* Retry button */}
           <button

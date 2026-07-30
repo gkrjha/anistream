@@ -9,10 +9,11 @@ interface CacheEntry<T> {
 
 const store = new Map<string, CacheEntry<unknown>>();
 
-export function cacheGet<T>(key: string): T | null {
+/** Returns undefined on miss so callers can cache null / negative results. */
+export function cacheGet<T>(key: string): T | undefined {
   const entry = store.get(key);
-  if (!entry) return null;
-  if (Date.now() > entry.expiresAt) { store.delete(key); return null; }
+  if (!entry) return undefined;
+  if (Date.now() > entry.expiresAt) { store.delete(key); return undefined; }
   return entry.data as T;
 }
 
@@ -25,8 +26,8 @@ export async function cacheWrap<T>(
   fn: () => Promise<T>,
   ttlSeconds = 3600
 ): Promise<T> {
-  const cached = cacheGet<T>(key);
-  if (cached !== null) return cached;
+  const hit = cacheGet<T>(key);
+  if (hit !== undefined) return hit;
   const data = await fn();
   cacheSet(key, data, ttlSeconds);
   return data;
