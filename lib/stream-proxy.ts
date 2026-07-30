@@ -1,5 +1,3 @@
-import { createHmac, timingSafeEqual } from 'crypto';
-
 // Upstream CDNs reject requests that don't carry the provider's Referer, so all
 // media has to be fetched server-side. Proxy URLs are signed to keep this route
 // from becoming an open proxy for arbitrary hosts.
@@ -33,34 +31,60 @@ export function isAllowedProxyHost(hostname: string): boolean {
   );
 }
 
-function b64url(input: Buffer | string): string {
-  return Buffer.from(input).toString('base64url');
+function b64url(input: string): string {
+  const bytes = new TextEncoder().encode(input);
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-function sign(url: string): string {
-  return createHmac('sha256', getSecret()).update(url).digest('base64url');
+function decodeB64url(input: string): string {
+  const padded = input
+    .replace(/-/g, '+')
+    .replace(/_/g, '/')
+    .padEnd(Math.ceil(input.length / 4) * 4, '=');
+  const binary = atob(padded);
+  return new TextDecoder().decode(Uint8Array.from(binary, (char) => char.charCodeAt(0)));
 }
 
-export function proxyUrl(target: string): string {
-  return `${PROXY_PATH}?u=${b64url(target)}&s=${sign(target)}`;
+async function sign(url: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(getSecret()),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(url));
+  let binary = '';
+  for (const byte of new Uint8Array(signature)) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-export function verifyProxyUrl(encoded: string, signature: string): string | null {
+export async function proxyUrl(target: string): Promise<string> {
+  return `${PROXY_PATH}?u=${b64url(target)}&s=${await sign(target)}`;
+}
+
+export async function verifyProxyUrl(encoded: string, signature: string): Promise<string | null> {
   let target: string;
   try {
-    target = Buffer.from(encoded, 'base64url').toString('utf8');
+    target = decodeB64url(encoded);
   } catch {
     return null;
   }
 
-  let expected: Buffer;
+  let expected: string;
   try {
-    expected = Buffer.from(sign(target));
+    expected = await sign(target);
   } catch {
     return null;
   }
-  const provided = Buffer.from(signature);
-  if (expected.length !== provided.length || !timingSafeEqual(expected, provided)) return null;
+  if (expected.length !== signature.length) return null;
+  let mismatch = 0;
+  for (let i = 0; i < expected.length; i++) {
+    mismatch |= expected.charCodeAt(i) ^ signature.charCodeAt(i);
+  }
+  if (mismatch !== 0) return null;
 
   try {
     const url = new URL(target);
@@ -75,21 +99,28 @@ export function verifyProxyUrl(encoded: string, signature: string): string | nul
 
 const URI_ATTR_TAGS = /^#EXT-X-(KEY|MAP|MEDIA|I-FRAME-STREAM-INF|PART|PRELOAD-HINT|RENDITION-REPORT)/;
 
-export function rewritePlaylist(playlist: string, playlistUrl: string): string {
-  return playlist
-    .split('\n')
-    .map((line) => {
+export async function rewritePlaylist(playlist: string, playlistUrl: string): Promise<string> {
+  const lines = await Promise.all(
+    playlist.split('\n').map(async (line) => {
       const trimmed = line.trim();
       if (!trimmed) return line;
 
       if (trimmed.startsWith('#')) {
         if (!URI_ATTR_TAGS.test(trimmed)) return line;
-        return line.replace(/URI="([^"]+)"/g, (_, uri: string) => {
-          return `URI="${proxyUrl(new URL(uri, playlistUrl).href)}"`;
-        });
+        const matches = [...line.matchAll(/URI="([^"]+)"/g)];
+        let rewritten = line;
+        for (const match of matches) {
+          const uri = match[1];
+          rewritten = rewritten.replace(
+            `URI="${uri}"`,
+            `URI="${await proxyUrl(new URL(uri, playlistUrl).href)}"`
+          );
+        }
+        return rewritten;
       }
 
-      return proxyUrl(new URL(trimmed, playlistUrl).href);
+      return await proxyUrl(new URL(trimmed, playlistUrl).href);
     })
-    .join('\n');
+  );
+  return lines.join('\n');
 }

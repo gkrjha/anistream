@@ -184,17 +184,18 @@ export default function HLSPlayer({
         if (cancelled || controller.signal.aborted) return;
         const hls = new Hls({
           enableWorker: true,
-          startLevel: -1,
+          // Start at the lighter 720p rendition; ABR can upgrade after playback starts.
+          startLevel: 0,
           // Proxy hop adds latency — keep a deeper buffer and prefetch
           maxBufferLength: 45,
           maxMaxBufferLength: 90,
           maxBufferHole: 0.5,
           startFragPrefetch: true,
-          fragLoadingTimeOut: 25000,
-          manifestLoadingTimeOut: 20000,
-          levelLoadingTimeOut: 20000,
-          fragLoadingMaxRetry: 6,
-          manifestLoadingMaxRetry: 4,
+          fragLoadingTimeOut: 15000,
+          manifestLoadingTimeOut: 12000,
+          levelLoadingTimeOut: 12000,
+          fragLoadingMaxRetry: 3,
+          manifestLoadingMaxRetry: 2,
         });
         hlsRef.current = hls;
         hls.loadSource(data.src);

@@ -33,13 +33,18 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: `Episode ${episode} (${lang}) not available` }, { status: 404 });
     }
 
-    return NextResponse.json({
-      src: proxyUrl(sources.file),
-      tracks: sources.tracks.map((t) => ({
-        src: proxyUrl(t.file),
+    const [src, tracks] = await Promise.all([
+      proxyUrl(sources.file),
+      Promise.all(sources.tracks.map(async (t) => ({
+        src: await proxyUrl(t.file),
         label: t.label,
         default: Boolean(t.default),
-      })),
+      }))),
+    ]);
+
+    return NextResponse.json({
+      src,
+      tracks,
       intro: sources.intro ?? null,
       outro: sources.outro ?? null,
       usedLang: sources.usedLang,
